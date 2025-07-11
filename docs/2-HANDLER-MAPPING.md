@@ -96,7 +96,6 @@ Object handler = handlerMapping.getHandler(requestPath);
 ---
 
 ## 🧪 다음 목표
-
 * Controller 인터페이스 도입 → if-else 구조 제거
 * 공통 `handle()` 메서드 정의
 * Dispatcher의 실행 흐름을 동적 처리 방식으로 개선
