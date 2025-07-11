@@ -1,6 +1,5 @@
 package winter.dispatcher;
 
-
 /*Dispatcher는 클라이언트 요청을 받아서 해당 핸들러(컨트롤러)로 전달하는
  * 핵심 클래스
  * 실제 요청 URL에 따라 어떤 메서드를 실행할 지 라우팅 책임을 가진다.*/
