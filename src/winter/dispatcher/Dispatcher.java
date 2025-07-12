@@ -19,10 +19,8 @@ public class Dispatcher {
             return;
         }
         //instanceof는 객체가 어떤 클래스의 인스턴스인 지 확인하는 java키워드
-        if(handler instanceof HelloController hello){
-            hello.handle();
-        }else if (handler instanceof ByeController bye){
-            bye.handle();
+        if(handler instanceof Controller controller) {
+            controller.handle();
         }else {
             System.out.println("500 Internal Error: UnKnown handler type");
         }
