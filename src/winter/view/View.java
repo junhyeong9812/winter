@@ -1,10 +1,9 @@
 package winter.view;
 
+import java.util.Map;
+
 /*
-* 실제 렌더링 책임을 가지는 view 엔터페이스*/
+* View는 모델 데이터를 받아 출력하는 책임을 가진다.*/
 public interface View {
-    void render();
-    /*현재는 render에 인자가 없지만
-    * 추후 모델 정보나 요청/응답 객체 전달이 가능하도록 확장 예정
-    * */
+    void render(Map<String,Object> model);
 }

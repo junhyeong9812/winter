@@ -1,5 +1,6 @@
 package winter.dispatcher;
 
+import winter.view.ModelAndView;
 import winter.view.SimpleViewResolver;
 import winter.view.View;
 import winter.view.ViewResolver;
@@ -31,12 +32,15 @@ public class Dispatcher {
 
         for(HandlerAdapter adapter: handlerAdapters){
             if(adapter.supports(handler)){
-                adapter.handle(handler);
+                //1. 핸들러 실행 -> ModelAndView 반환
+                ModelAndView mv =((Controller) handler).handle();
 
-                //viewResolver 적용
-                ViewResolver viewResolver=new SimpleViewResolver();
-                View view = viewResolver.resolveViewName("hello");
-                System.out.println("뷰 출력 경로:"+view);
+                //2. 논리 뷰 이름 ->View 객체 생성
+                ViewResolver viewResolver= new SimpleViewResolver();
+                View view=viewResolver.resolveViewName(mv.getViewName());
+
+                //3.모델 전달하여 뷰 렌더링
+                view.render(mv.getModel());
 
                 return;
             }
