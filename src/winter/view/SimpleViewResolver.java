@@ -1,13 +1,16 @@
 package winter.view;
 
 /*
-* prefix+suffix 기반으로 뷰 이름을 실제 경로로 변환하는 기본 구현체*/
+* prefix+suffix 기반 물리 경로를 가진 View 객체를 반환하는
+* Resolver
+* */
 public class SimpleViewResolver implements ViewResolver{
     private final String prefix="/views/";
     private final String suffix=".html";
 
     @Override
-    public String resolveViewName(String viewName){
-        return prefix+viewName+suffix;
+    public View resolveViewName(String viewName){
+        String fullPath = prefix + viewName +suffix;
+        return new InternalResourceView(fullPath);
     }
 }
