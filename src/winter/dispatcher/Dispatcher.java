@@ -1,5 +1,8 @@
 package winter.dispatcher;
 
+import winter.view.SimpleViewResolver;
+import winter.view.ViewResolver;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +31,12 @@ public class Dispatcher {
         for(HandlerAdapter adapter: handlerAdapters){
             if(adapter.supports(handler)){
                 adapter.handle(handler);
+
+                //viewResolver 적용
+                ViewResolver viewResolver=new SimpleViewResolver();
+                String viewPath= viewResolver.resolveViewName("hello");
+                System.out.println("뷰 출력 경로:"+viewPath);
+
                 return;
             }
         }
