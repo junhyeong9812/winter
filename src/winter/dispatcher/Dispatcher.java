@@ -1,6 +1,7 @@
 package winter.dispatcher;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -11,6 +12,11 @@ public class Dispatcher {
 
     private final HandlerMapping handlerMapping=new HandlerMapping();
 
+    //여러 HandlerAdapter 지원 가능
+    private final List<HandlerAdapter> handlerAdapters = List.of(
+            new ControllerHandlerAdapter()
+    );
+
     //요청을 처리하는 메서드
     public void dispatch(String requestPath){
         Object handler = handlerMapping.getHandler(requestPath);
@@ -18,11 +24,15 @@ public class Dispatcher {
             System.out.println("404 Not Found: " + requestPath);
             return;
         }
-        //instanceof는 객체가 어떤 클래스의 인스턴스인 지 확인하는 java키워드
-        if(handler instanceof Controller controller) {
-            controller.handle();
-        }else {
-            System.out.println("500 Internal Error: UnKnown handler type");
+
+        for(HandlerAdapter adapter: handlerAdapters){
+            if(adapter.supports(handler)){
+                adapter.handle(handler);
+                return;
+            }
         }
+
+
+            System.out.println("500 Internal Error: UnKnown handler type");
     }
 }
