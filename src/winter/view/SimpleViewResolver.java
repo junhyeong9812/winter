@@ -5,7 +5,7 @@ package winter.view;
 * Resolver
 * */
 public class SimpleViewResolver implements ViewResolver{
-    private final String prefix="/views/";
+    private final String prefix="src/winter/templates/";
     private final String suffix=".html";
 
     @Override
