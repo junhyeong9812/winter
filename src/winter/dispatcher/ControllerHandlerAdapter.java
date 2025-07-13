@@ -1,7 +1,12 @@
 package winter.dispatcher;
 
-/*Controller 인터페이스를 지원하는 핸들러 어댑터
-* 실제로 handle()을 호출하는 역할*/
+import winter.http.HttpRequest;
+import winter.http.HttpResponse;
+import winter.view.ModelAndView;
+
+/*
+* Controller 인터페이스를 구현한 핸들러를 처리하는 어댑터,
+* 실제로 handle(req,res)를 호출하여 modelAndView를 반환한다.*/
 public class ControllerHandlerAdapter implements HandlerAdapter{
     @Override
     public boolean supports(Object handler){
@@ -9,8 +14,8 @@ public class ControllerHandlerAdapter implements HandlerAdapter{
     }
 
     @Override
-    public void handle(Object handler){
-        ((Controller) handler).handle();
+    public ModelAndView handle(Object handler, HttpRequest request, HttpResponse response){
+        return ((Controller) handler).handle(request,response);
     }//이처럼 안전하게 캐스팅하여 실행
 
 }

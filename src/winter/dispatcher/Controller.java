@@ -1,10 +1,11 @@
 package winter.dispatcher;
 
+import winter.http.HttpRequest;
+import winter.http.HttpResponse;
 import winter.view.ModelAndView;
 
-/*
-* 모든 컨트롤러는 이 인터페이스를 구현해야 하며,
-* 논리 뷰 이름과 모델 데이터를 함께 담은 ModelAndView를 반환한다.*/
+/*요청(HttpRequest),응답(HttpResponse)을 받아 처리하고 modelAndView를
+* 반환한느 컨트롤러 인터페이스*/
 public interface Controller {
-    ModelAndView handle();
+    ModelAndView handle(HttpRequest request, HttpResponse response);
 }
