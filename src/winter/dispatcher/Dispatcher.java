@@ -52,7 +52,7 @@ public class Dispatcher {
                 View view=viewResolver.resolveViewName(mv.getViewName());
 
                 //3.모델 전달하여 뷰 렌더링
-                view.render(mv.getModel());
+                view.render(mv.getModel(), response);
 
                 response.send();
                 return;

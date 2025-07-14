@@ -1,5 +1,8 @@
 package winter.view;
 
+import winter.http.HttpResponse;
+
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -19,23 +22,21 @@ public class InternalResourceView implements View{
     }
 
     @Override
-    public void render(Map<String, Object> model) {
+    public void render(Map<String, Object> model, HttpResponse response) {
         try {
+            File file = new File(path);
             // 파일 내용 읽기
-            String content = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+            String content = Files.readString(file.toPath());
 
-            // 모델 값으로 치환
-            if (model != null) {
-                for (Map.Entry<String, Object> entry : model.entrySet()) {
-                    String placeholder = "${" + entry.getKey() + "}";
-                    content = content.replace(placeholder, entry.getValue().toString());
-                }
+            //간단한 placeholder 처리 예시 :${message}-> 값으로 대체
+            for(Map.Entry<String,Object> entry : model.entrySet()){
+                content = content.replace("${"+entry.getKey()+"}",entry.getValue().toString());
             }
-
-            // 결과 출력
-            System.out.println("Rendered View: \n" + content);
+            response.setStatus(200);
+            response.setBody(content);
         } catch (IOException e) {
-            System.out.println("❌ View Rendering Failed: " + e.getMessage());
+            response.setStatus(500);
+            response.setBody("View Rendering Failed: " + path);
         }
     }
 
