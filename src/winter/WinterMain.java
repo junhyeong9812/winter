@@ -21,6 +21,13 @@ public class WinterMain {
         HttpResponse byeResponse = new HttpResponse();
         dispatcher.dispatch(byeRequest,byeResponse);
 
+        // /register 요청
+        HttpRequest registerRequest = new HttpRequest("/register");
+        registerRequest.addParameter("name","Jun");
+        registerRequest.addParameter("email", "jun@test.com");
+        HttpResponse registerResponse = new HttpResponse();
+        dispatcher.dispatch(registerRequest,registerResponse);
+
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");
         HttpResponse invalidResponse =new HttpResponse();

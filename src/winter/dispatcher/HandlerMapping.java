@@ -15,6 +15,7 @@ public class HandlerMapping {
         //수동 라우팅 등록(추후 자동 스캔 예정)
         mapping.put("/hello",new HelloController());
         mapping.put("/bye",new ByeController());
+        mapping.put("/register",new RegisterController());
     }
 
     //요청 경로에 해당하는 핸들러 반환
