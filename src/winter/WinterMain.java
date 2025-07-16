@@ -21,12 +21,10 @@ public class WinterMain {
         HttpResponse byeResponse = new HttpResponse();
         dispatcher.dispatch(byeRequest,byeResponse);
 
-        // /register 요청
-        HttpRequest registerRequest = new HttpRequest("/register");
-        registerRequest.addParameter("name","Jun");
-        registerRequest.addParameter("email", "jun@test.com");
+        // /register 요청 (자동 파라미터 파싱)
+        HttpRequest registerRequest = new HttpRequest("/register?name=Jun&email=jun@test.com");
         HttpResponse registerResponse = new HttpResponse();
-        dispatcher.dispatch(registerRequest,registerResponse);
+        dispatcher.dispatch(registerRequest, registerResponse);
 
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");
