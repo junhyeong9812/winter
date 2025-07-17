@@ -21,10 +21,21 @@ public class WinterMain {
         HttpResponse byeResponse = new HttpResponse();
         dispatcher.dispatch(byeRequest,byeResponse);
 
-        // /register 요청 (자동 파라미터 파싱)
-        HttpRequest registerRequest = new HttpRequest("/register?name=Jun&email=jun@test.com");
-        HttpResponse registerResponse = new HttpResponse();
-        dispatcher.dispatch(registerRequest, registerResponse);
+      // /register - GET 요청
+        HttpRequest registerGet = new HttpRequest("/register", "GET");
+        HttpResponse registerGetResponse = new HttpResponse();
+        dispatcher.dispatch(registerGet, registerGetResponse);
+
+        // /register - POST 요청
+        HttpRequest registerPost = new HttpRequest("/register?name=Jun&email=jun@test.com", "POST");
+        HttpResponse registerPostResponse = new HttpResponse();
+        dispatcher.dispatch(registerPost, registerPostResponse);
+
+        // /register - PUT 요청 (허용되지 않음)
+        HttpRequest registerPut = new HttpRequest("/register", "PUT");
+        HttpResponse registerPutResponse = new HttpResponse();
+        dispatcher.dispatch(registerPut, registerPutResponse);
+
 
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");

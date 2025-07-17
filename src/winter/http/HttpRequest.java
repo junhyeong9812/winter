@@ -4,39 +4,51 @@ import java.util.HashMap;
 import java.util.Map;
 
 /*
-* 간단한 요청 정보 표현 객체
-* 요청 경로와 쿼리 파라미터를 포함하며,
-* Dispatcher가 요청 경로를 넘길 때 ?name=junhyeong 같은 형태도 파싱 가능*/
+* 간단한요청 정보 표현 객체.
+* 경로 + 쿼리 파라미터 + HTTP 메서드(GET,POST 등)를 포함한다.*/
 public class HttpRequest {
   private final String path;
+  private final String method;
   private final Map<String,String> parameters= new HashMap<>();
 
   /*
-  * 생성자 -  요청 경로 문자열을 받아 내부적으로 쿼리 파라미터를 자동 파싱함.
-  * 예: "/register?name=junhyeong&email=test@test.com"
-  *
-  * 1. '?'를 기준으로 경로(path)와 쿼리스트링(query String)을 분리
-  * 2. query string이 존재하면 key=value 형태로 분리하여 파라미터 맵에 저장*/
-  public HttpRequest(String rawPath) {
-      String[] parts = rawPath.split("\\?", 2); // 경로와 쿼리스트링 분리
-      this.path = parts[0]; // 앞부분은 순수 요청 경로
-
-      if (parts.length > 1) {
-          String queryString = parts[1]; // 뒷부분은 name=junhyung&email=test
-          String[] pairs = queryString.split("&");
-
-          for (String pair : pairs) {
-              String[] kv = pair.split("=", 2); // key=value 분리
-              if (kv.length == 2) {
-                  parameters.put(kv[0], kv[1]); // 파라미터 맵에 저장
-              }
-          }
-      }
+  * 기본 생성자 (GET 요청 전용)*/
+  public HttpRequest(String rawPath){
+      this(rawPath, "GET");
   }
+
+    /**
+     * 생성자 - 요청 경로 및 HTTP 메서드를 지정
+     *
+     * @param rawPath "/register?name=jun"
+     * @param method "GET", "POST", ...
+     */
+    public HttpRequest(String rawPath, String method) {
+        this.method = method.toUpperCase(); // 대문자로 통일
+        String[] parts = rawPath.split("\\?", 2);
+        this.path = parts[0];
+
+        if (parts.length > 1) {
+            String queryString = parts[1];
+            String[] pairs = queryString.split("&");
+
+            for (String pair : pairs) {
+                String[] kv = pair.split("=", 2);
+                if (kv.length == 2) {
+                    parameters.put(kv[0], kv[1]);
+                }
+            }
+        }
+    }
 
     /** 순수 요청 경로 반환 (예: "/register") */
     public String getPath() {
         return path;
+    }
+
+    /*HTTP 메서드 반환 (예 : GET,POST)*/
+    public String getMethod(){
+        return method;
     }
 
     /** 개별 파라미터 조회 (예: getParameter("name") → "junhyung") */

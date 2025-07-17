@@ -47,11 +47,17 @@ public class Dispatcher {
                 //1. 핸들러 실행 (request,response 전달)
                 ModelAndView mv =adapter.handle(handler,request,response);
 
-                //2. 뷰 이름 ->View 객체로 변환
+                //2. null 대응
+                if (mv == null) { // ✅ null 대응 추가
+                    response.send();
+                    return;
+                }
+
+                //3. 뷰 이름 ->View 객체로 변환
                 ViewResolver viewResolver= new SimpleViewResolver();
                 View view=viewResolver.resolveViewName(mv.getViewName());
 
-                //3.모델 전달하여 뷰 렌더링
+                //4.모델 전달하여 뷰 렌더링
                 view.render(mv.getModel(), response);
 
                 response.send();
