@@ -16,6 +16,7 @@ public class HandlerMapping {
         mapping.put("/hello",new HelloController());
         mapping.put("/bye",new ByeController());
         mapping.put("/register",new RegisterController());
+        mapping.put("/user", new UserController());
     }
 
     //요청 경로에 해당하는 핸들러 반환

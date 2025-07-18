@@ -36,6 +36,11 @@ public class WinterMain {
         HttpResponse registerPutResponse = new HttpResponse();
         dispatcher.dispatch(registerPut, registerPutResponse);
 
+        // /user 요청 - GET
+        HttpRequest userRequest = new HttpRequest("/user?name=Jun&city=Seoul&zipcode=12345", "GET");
+        HttpResponse userResponse = new HttpResponse();
+        dispatcher.dispatch(userRequest, userResponse);
+
 
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");
