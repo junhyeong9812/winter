@@ -46,6 +46,11 @@ public class WinterMain {
         HttpResponse staticResponse = new HttpResponse();
         dispatcher.dispatch(staticRequest, staticResponse);
 
+        // /user 요청 - GET (zipcode 누락)
+        HttpRequest ExRequest = new HttpRequest("/user?name=Jun&city=Seoul", "GET");
+        HttpResponse ExResponse = new HttpResponse();
+        dispatcher.dispatch(ExRequest, ExResponse);
+
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");
         HttpResponse invalidResponse =new HttpResponse();

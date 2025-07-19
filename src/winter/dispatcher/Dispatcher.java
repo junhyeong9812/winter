@@ -1,5 +1,7 @@
 package winter.dispatcher;
 
+import winter.excption.ExceptionResolver;
+import winter.excption.SimpleExceptionResolver;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
 import winter.view.ModelAndView;
@@ -29,6 +31,11 @@ public class Dispatcher {
             new ControllerHandlerAdapter()
     );
 
+    // 다양한 ExceptionResolver 지원 가능
+    private final List<ExceptionResolver> exceptionResolvers = List.of(
+            new SimpleExceptionResolver()
+    );
+
     //정절 리소스 기본 경로 설정 (src/winter/static)
     private final String staticBasePath= "src/winter/static";
 
@@ -37,51 +44,62 @@ public class Dispatcher {
     * 1. HandlerMapping으로 핸들러 조회
     * 2. HandlerAdapter를 통해 핸들러 실행(ModelAndView반환)
     * 3.viewResolver로 View를 찾고, 모델을 렌더링*/
-    public void dispatch(HttpRequest request, HttpResponse response){
+    public void dispatch(HttpRequest request, HttpResponse response) {
         String requestPath = request.getPath();
 
         //1. 정적 리소스 처리 우선
-        if(requestPath.startsWith("/static/")){
-            handleStaticResource(requestPath,response);
+        if (requestPath.startsWith("/static/")) {
+            handleStaticResource(requestPath, response);
             return;
         }
 
         //2.핸들러 매핑(Controller or RestController)
         Object handler = handlerMapping.getHandler(requestPath);
 
-        if(handler == null){
+        if (handler == null) {
             response.setStatus(404);
-            response.setBody("404 Not Found"+requestPath);
+            response.setBody("404 Not Found" + requestPath);
             response.send();
             return;
         }
 
-        for(HandlerAdapter adapter: handlerAdapters){
-            if(adapter.supports(handler)){
-                //1. 핸들러 실행 (request,response 전달)
-                ModelAndView mv =adapter.handle(handler,request,response);
+        for (HandlerAdapter adapter : handlerAdapters) {
+            if (adapter.supports(handler)) {
+                try {
+                    //1. 핸들러 실행 (request,response 전달)
+                    ModelAndView mv = adapter.handle(handler, request, response);
 
-                //2. null 대응
-                if (mv == null) { // ✅ null 대응 추가
+                    //2. null 대응
+                    if (mv == null) { // ✅ null 대응 추가
+                        response.send();
+                        return;
+                    }
+
+                    //3. 뷰 이름 ->View 객체로 변환
+                    ViewResolver viewResolver = new SimpleViewResolver();
+                    View view = viewResolver.resolveViewName(mv.getViewName());
+
+                    //4.모델 전달하여 뷰 렌더링
+                    view.render(mv.getModel(), response);
+
                     response.send();
                     return;
+                } catch (Exception ex) {
+                    for (ExceptionResolver resolver : exceptionResolvers) {
+                        if (resolver.resolveException(request, response, ex)) {
+                            response.send();
+                            return;
+                        }
+                    }
+                    // ExceptionResolver가 처리하지 못하면 다시 던짐
+                    throw new RuntimeException("Unhandled Exception", ex);
                 }
-
-                //3. 뷰 이름 ->View 객체로 변환
-                ViewResolver viewResolver= new SimpleViewResolver();
-                View view=viewResolver.resolveViewName(mv.getViewName());
-
-                //4.모델 전달하여 뷰 렌더링
-                view.render(mv.getModel(), response);
-
-                response.send();
-                return;
             }
-        }
 
-        response.setStatus(500);
-        response.setBody("500 Internal Error:Unknown handler type");
-        response.send();
+            response.setStatus(500);
+            response.setBody("500 Internal Error:Unknown handler type");
+            response.send();
+        }
     }
 
     //별도로 분리한 정적 리소스 처리

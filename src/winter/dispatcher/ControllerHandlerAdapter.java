@@ -15,6 +15,8 @@ public class ControllerHandlerAdapter implements HandlerAdapter{
 
     @Override
     public ModelAndView handle(Object handler, HttpRequest request, HttpResponse response){
+//        테스트용 예외
+//        throw new IllegalArgumentException("어댑터에서 강제로 발생시킨 예외");
         return ((Controller) handler).handle(request,response);
     }//이처럼 안전하게 캐스팅하여 실행
 
