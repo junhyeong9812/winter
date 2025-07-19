@@ -41,6 +41,10 @@ public class WinterMain {
         HttpResponse userResponse = new HttpResponse();
         dispatcher.dispatch(userRequest, userResponse);
 
+        //정적파일 요청
+        HttpRequest staticRequest = new HttpRequest("/static/style.css");
+        HttpResponse staticResponse = new HttpResponse();
+        dispatcher.dispatch(staticRequest, staticResponse);
 
         // /invalid 요청
         HttpRequest invalidRequest = new HttpRequest("/invalid");

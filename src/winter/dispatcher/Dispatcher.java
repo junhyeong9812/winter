@@ -7,6 +7,9 @@ import winter.view.SimpleViewResolver;
 import winter.view.View;
 import winter.view.ViewResolver;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,6 +29,9 @@ public class Dispatcher {
             new ControllerHandlerAdapter()
     );
 
+    //정절 리소스 기본 경로 설정 (src/winter/static)
+    private final String staticBasePath= "src/winter/static";
+
     /*
     * 요청을 처리하는 핵심 메서드
     * 1. HandlerMapping으로 핸들러 조회
@@ -33,6 +39,14 @@ public class Dispatcher {
     * 3.viewResolver로 View를 찾고, 모델을 렌더링*/
     public void dispatch(HttpRequest request, HttpResponse response){
         String requestPath = request.getPath();
+
+        //1. 정적 리소스 처리 우선
+        if(requestPath.startsWith("/static/")){
+            handleStaticResource(requestPath,response);
+            return;
+        }
+
+        //2.핸들러 매핑(Controller or RestController)
         Object handler = handlerMapping.getHandler(requestPath);
 
         if(handler == null){
@@ -68,5 +82,33 @@ public class Dispatcher {
         response.setStatus(500);
         response.setBody("500 Internal Error:Unknown handler type");
         response.send();
+    }
+
+    //별도로 분리한 정적 리소스 처리
+    private void handleStaticResource(String requestPath,HttpResponse response){
+        try {
+            //요청 경로에서 static제거 후 실제 파일 시스템 경로 생성
+            String relativePath = requestPath.replaceFirst("/static/", "");
+            String filePath = staticBasePath + "/" + relativePath;
+            String content = Files.readString(Paths.get(filePath));
+            response.setStatus(200);
+            response.setBody(content);
+
+            //(선택) Content-Type
+            if(filePath.endsWith(".css")){
+                response.addHeader("Content-Type","text/css");
+            }else if (filePath.endsWith(".js")){
+                response.addHeader("Content-Type", "application/javascript");
+            }else if (filePath.endsWith(".html")){
+                response.addHeader("Content-Type", "text/html");
+            }
+
+            response.send();
+
+        } catch (IOException e){
+            response.setStatus(404);
+            response.setBody("Static file not found: "+requestPath);
+            response.send();
+        }
     }
 }
