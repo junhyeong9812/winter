@@ -5,11 +5,12 @@ import java.util.Map;
 
 /*
 * 간단한요청 정보 표현 객체.
-* 경로 + 쿼리 파라미터 + HTTP 메서드(GET,POST 등)를 포함한다.*/
+* 경로 + 쿼리 파라미터 + HTTP 메서드(GET,POST 등) + Header를 포함한다.*/
 public class HttpRequest {
   private final String path;
   private final String method;
   private final Map<String,String> parameters= new HashMap<>();
+  private final Map<String,String> headers = new HashMap<>();
 
   /*
   * 기본 생성자 (GET 요청 전용)*/
@@ -66,4 +67,16 @@ public class HttpRequest {
         parameters.put(key, value);
     }
 
+    // Header 추가 및 조회 메서드
+    public void addHeader(String key, String value) {
+        headers.put(key.toLowerCase(), value);
+    }
+
+    public String getHeader(String key) {
+        return headers.getOrDefault(key.toLowerCase(), "*/*");
+    }
+
+    public Map<String, String> getHeaders() {
+        return headers;
+    }
 }
