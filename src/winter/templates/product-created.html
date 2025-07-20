@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Created</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            text-align: center;
+        }
+        .success-icon {
+            font-size: 4em;
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+        .success-title {
+            color: #27ae60;
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        .product-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #27ae60;
+        }
+        .info-row {
+            margin: 10px 0;
+            text-align: left;
+        }
+        .label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .value {
+            color: #34495e;
+            margin-left: 10px;
+        }
+        .tech-note {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f5e8;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #2d5a2d;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="success-icon">✅</div>
+    <h1 class="success-title">상품 생성 완료!</h1>
+    <p>${message}</p>
+
+    <div class="product-info">
+        <div class="info-row">
+            <span class="label">상품명:</span>
+            <span class="value">${productName}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">가격:</span>
+            <span class="value">₩${price}</span>
+        </div>
+        <div class="info-row">
+            <span class="label">생성 시간:</span>
+            <span class="value">${timestamp}</span>
+        </div>
+    </div>
+
+    <div class="tech-note">
+        <strong>🔧 기술 정보:</strong><br>
+        • POST /products 요청 처리 완료<br>
+        • HttpRequest + HttpResponse 파라미터 메서드 실행<br>
+        • 어노테이션 기반 컨트롤러로 생성됨
+    </div>
+</div>
+</body>
+</html>
