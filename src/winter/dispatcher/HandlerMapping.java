@@ -17,9 +17,16 @@ public class HandlerMapping {
         mapping.put("/bye",new ByeController());
         mapping.put("/register",new RegisterController());
         mapping.put("/user", new UserController());
+        // 21단계: JSON API 테스트용 경로 추가
+        mapping.put("/api", new ApiController());
     }
 
-    //요청 경로에 해당하는 핸들러 반환
+    /**
+     * 요청 경로에 해당하는 핸들러 반환
+     *
+     * @param path 요청 경로 (예: "/api", "/user")
+     * @return 해당하는 Controller 객체, 없으면 null
+     */
     public Object getHandler(String path){
         return mapping.get(path);
     }

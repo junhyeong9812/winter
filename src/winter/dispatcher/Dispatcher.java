@@ -4,10 +4,7 @@ import winter.excption.ExceptionResolver;
 import winter.excption.SimpleExceptionResolver;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
-import winter.view.ModelAndView;
-import winter.view.SimpleViewResolver;
-import winter.view.View;
-import winter.view.ViewResolver;
+import winter.view.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -16,12 +13,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/*
-* Dispatcher는 클라이언트 요청을 받아,
-* HandlerMapping을 통해 핸들러를 찾고,
-* HadlerAdapter를 통해 실행한 후,
-* ViewResolver로 뷰를 찾아 렌더링하는 프레임워크의 핵심 흐름을 담당한다.
-*/
+/**
+ * Dispatcher는 클라이언트 요청을 받아,
+ * HandlerMapping을 통해 핸들러를 찾고,
+ * HandlerAdapter를 통해 실행한 후,
+ * ViewResolver로 뷰를 찾아 렌더링하는 프레임워크의 핵심 흐름을 담당한다.
+ *
+ * 21단계 업데이트: JSON 응답 지원
+ * - ContentNegotiatingViewResolver 도입
+ * - Accept 헤더 기반 View 선택 (HTML vs JSON)
+ */
 public class Dispatcher {
 
     private final HandlerMapping handlerMapping=new HandlerMapping();
@@ -70,13 +71,15 @@ public class Dispatcher {
                     ModelAndView mv = adapter.handle(handler, request, response);
 
                     //2. null 대응
-                    if (mv == null) { // ✅ null 대응 추가
+                    if (mv == null) {
                         response.send();
                         return;
                     }
 
-                    //3. 뷰 이름 ->View 객체로 변환
-                    ViewResolver viewResolver = new SimpleViewResolver();
+                    //3. Content Negotiating ViewResolver 사용
+                    // Accept 헤더를 기반으로 HTML 또는 JSON View 선택
+                    ContentNegotiatingViewResolver viewResolver =new ContentNegotiatingViewResolver();
+                    viewResolver.setCurrentRequest(request);
                     View view = viewResolver.resolveViewName(mv.getViewName());
 
                     //4.모델 전달하여 뷰 렌더링

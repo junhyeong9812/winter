@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Winter API - HTML View</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #ecf0f1;
+            border-left: 4px solid #3498db;
+        }
+        .label {
+            font-weight: bold;
+            color: #34495e;
+        }
+        .value {
+            color: #2c3e50;
+            margin-left: 10px;
+        }
+        .note {
+            margin-top: 30px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">${message}</h1>
+
+    <div class="info-item">
+        <span class="label">사용자 이름:</span>
+        <span class="value">${user.name}</span>
+    </div>
+
+    <div class="info-item">
+        <span class="label">도시:</span>
+        <span class="value">${user.address.city}</span>
+    </div>
+
+    <div class="info-item">
+        <span class="label">우편번호:</span>
+        <span class="value">${user.address.zipcode}</span>
+    </div>
+
+    <div class="info-item">
+        <span class="label">타임스탬프:</span>
+        <span class="value">${timestamp}</span>
+    </div>
+
+    <div class="note">
+        <strong>💡 팁:</strong>
+        동일한 /api 경로에 Accept 헤더를 'application/json'으로 요청하면
+        이 데이터가 JSON 형태로 응답됩니다!
+    </div>
+</div>
+</body>
+</html>
