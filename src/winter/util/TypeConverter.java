@@ -53,7 +53,54 @@ public class TypeConverter {
             if (value == null || value.isEmpty()) return null;
             return LocalDateTime.parse(value, DateTimeFormatter.ISO_LOCAL_DATE_TIME);  // yyyy-MM-ddTHH:mm:ss
         });
+    }
+    /**
+     * 문자열 값을 지정된 타입으로 변환
+     *
+     * @param value 변환할 문자열 값
+     * @param targetType 변환할 목표 타입
+     * @return 변환된 객체
+     * @throws IllegalArgumentException 지원하지 않는 타입이거나 변환 실패 시
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T convert(String value,Class<T> targetType){
+        if(value == null){
+            return null;
+        }
+
+        //배열 타입 처리
+        if(targetType.isArray()){
+            return (T) convertArray(value,targetType);
+        }
+
+        //등록된 변환기 찾기
+        Function<String,Object> converter = CONVERTERS.get(targetType);
+        if(converter ==null){
+            throw new IllegalArgumentException("Unsupported type for conversion: "+ targetType.getName());
+        }
+
+        try {
+            return (T) converter.apply(value);
+        }catch (Exception e){
+            throw new IllegalArgumentException(
+                    String.format("Cannot convert '%s' to type %s: %s",
+                            value, targetType.getSimpleName(), e.getMessage()), e);
+        }
+
 
     }
+    /**
+     * 문자열을 배열로 변환
+     * 쉼표로 구분된 값들을 배열로 변환합니다.
+     *
+     * @param value 변환할 문자열 (예: "apple,banana,cherry")
+     * @param arrayType 배열 타입 (예: String[].class)
+     * @return 변환된 배열
+     */
+    private static Object convertArray(String value, Class<?> arrayType) {
+
+    }
+
+
 
 }
