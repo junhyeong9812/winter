@@ -98,9 +98,89 @@ public class TypeConverter {
      * @return 변환된 배열
      */
     private static Object convertArray(String value, Class<?> arrayType) {
+        Class<?> componentType = arrayType.getComponentType();
+
+        //빈 값이면 빈 배열 반환
+        if(value == null || value.trim().isEmpty()){
+            return java.lang.reflect.Array.newInstance(componentType,0);
+        }
+
+        //쉼표로 분리
+        String[] parts = value.split(",");
+        Object array = java.lang.reflect.Array.newInstance(componentType,parts.length);
+
+        //각 요소를 해당 타입으로 변환
+        for(int i = 0; i < parts.length;i++){
+            String part = parts[i].trim();
+            Object convertedValue = convert(part,componentType);
+            java.lang.reflect.Array.set(array, i, convertedValue);
+        }
+        return array;
 
     }
 
+    /**
+     * 지원하는 타입인지 확인
+     *
+     * @param type 확인할 타입
+     * @return 지원 여부
+     */
+    public static boolean isSupported(Class<?> type){
+        return CONVERTERS.containsKey(type) || type.isArray();
+    }
+
+    /**
+     * 기본값이 있는 변환
+     * 변환 실패 시 기본값을 반환합니다.
+     *
+     * @param value 변환할 문자열
+     * @param targetType 목표 타입
+     * @param defaultValue 기본값
+     * @return 변환된 값 또는 기본값
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T convertWithDefault(String value, Class<T> targetType,String defaultValue){
+         try {
+             //값이 없으면 기본값 사용
+             String valueToConvert = (value == null || value.isEmpty()) ? defaultValue :value;
+
+             if(valueToConvert ==null || valueToConvert.isEmpty()){
+                 //기본값도 없으면 null 반환(nullable 타입인 경우)
+                 if(targetType.isPrimitive()){
+                     //기본 타입인 경우 기본값 반환
+                     return getDefaultForPrimitive(targetType);
+                 }
+                 return null;
+             }
+             return convert(valueToConvert, targetType);
+         }catch (Exception e){
+             //변환 실패 시 기본값으로 재시도
+             if(!defaultValue.isEmpty()){
+                 try{
+                     return convert(defaultValue,targetType);
+                 }catch (Exception ex){
+                     //기본값 변환도 실패하면 예외 발생
+                     throw new IllegalArgumentException("Cannot convert default value: " + defaultValue, ex);
+                 }
+             }
+             throw e;
+         }
+     }
+    /**
+     * 기본 타입의 기본값 반환
+     *
+     * @param primitiveType 기본 타입
+     * @return 기본값
+     */
+    @SuppressWarnings("unchecked")
+    private static <T> T getDefaultForPrimitive(Class<T> primitiveType){
+        if(primitiveType ==int.class) return (T) Integer.valueOf(0);
+        if(primitiveType == long.class) return (T) Long.valueOf(0L);
+        if(primitiveType == double.class) return (T) Double.valueOf(0.0);
+        if(primitiveType == boolean.class) return (T) Boolean.valueOf(false);
+
+        throw new IllegalArgumentException("Unsupported primitive type: " + primitiveType);
+    }
 
 
 }
