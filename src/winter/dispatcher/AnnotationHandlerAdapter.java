@@ -7,22 +7,27 @@ import winter.view.ModelAndView;
 import java.lang.reflect.Method;
 
 /**
- * 어노테이션 기반 핸들러 메서드를 실행하는 어댑터
+ * 어노테이션 기반 핸들러 메서드를 실행하는 어댑터 (23단계 확장 버전)
  *
- * 기존 ControllerHandlerAdapter가 Controller 인터페이스를 처리한다면,
- * AnnotationHandlerAdapter는 HandlerMethod 객체를 처리합니다.
+ * 기존 AnnotationHandlerAdapter를 확장하여 더 정교한 파라미터 바인딩을 지원합니다.
  *
- * 처리 과정:
- * 1. HandlerMethod에서 컨트롤러 객체와 메서드 추출
- * 2. 리플렉션을 사용하여 메서드 호출
- * 3. 메서드 실행 결과를 ModelAndView로 반환
+ * 22단계 → 23단계 변화:
+ * - 기존: 0개, 1개(HttpRequest), 2개(HttpRequest+HttpResponse) 시그니처만 지원
+ * - 확장: @RequestParam, @ModelAttribute를 사용한 임의 개수의 파라미터 지원
  *
- * 지원하는 메서드 시그니처:
- * - public ModelAndView methodName()
- * - public ModelAndView methodName(HttpRequest request)
- * - public ModelAndView methodName(HttpRequest request, HttpResponse response)
+ * 지원하는 메서드 시그니처 확장:
+ * - public ModelAndView method()
+ * - public ModelAndView method(HttpRequest request)
+ * - public ModelAndView method(HttpRequest request, HttpResponse response)
+ * - public ModelAndView method(@RequestParam("name") String name)
+ * - public ModelAndView method(@ModelAttribute UserForm form)
+ * - public ModelAndView method(@RequestParam("id") int id, @ModelAttribute UserForm form, HttpResponse response)
+ * - 기타 다양한 조합...
  */
 public class AnnotationHandlerAdapter implements HandlerAdapter {
+
+    //파라미터 해결을 위한 전략 객체
+    private final ParameterResolver parameterResolver = new ParameterResolver();
 
     /**
      * 이 어댑터가 주어진 핸들러를 지원하는지 확인
@@ -53,13 +58,33 @@ public class AnnotationHandlerAdapter implements HandlerAdapter {
             Method method = handlerMethod.getMethod();
 
             // 메서드 파라미터 수에 따른 호출 방식 결정
-            ModelAndView result = invokeHandlerMethod(controller, method, request, response);
+            ModelAndView result = invokeHandlerMethodWithParameterBinding(controller, method, request, response);
 
             return result;
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to invoke handler method: " + handlerMethod, e);
         }
+    }
+
+    /**
+     * 파라미터 바인딩을 사용하여 메서드 호출 (23단계 새로운 방식)
+     *
+     * 메서드의 파라미터 정보를 분석하고, 각 파라미터에 맞는 값을 해결하여 메서드를 호출합니다.
+     *
+     * @param controller 컨트롤러 인스턴스
+     * @param method 실행할 메서드
+     * @param request HTTP 요청
+     * @param response HTTP 응답
+     * @return 메서드 실행 결과
+     * @throws Exception 메서드 호출 실패 시
+     */
+    private ModelAndView invokeHandlerMethodWithParameterBinding(Object controller, Method method, HttpRequest request, HttpResponse response) {
+
+        //메서드의 파라미터 정보 가져오기
+
+
+        return null;
     }
 
     /**
