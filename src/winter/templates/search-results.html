@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 15px;
+        }
+        .search-info {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .search-params {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 25px 0;
+        }
+        .param-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+        .param-label {
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+        .param-value {
+            color: #34495e;
+            font-size: 1.1em;
+        }
+        .results-summary {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .pagination-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            text-align: center;
+        }
+        .tech-info {
+            margin-top: 30px;
+            padding: 15px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 8px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">🔍 Search Results</h1>
+
+    <div class="search-info">
+        <h2>${message}</h2>
+        <p>@RequestParam을 사용한 개별 파라미터 바인딩 테스트</p>
+    </div>
+
+    <div class="search-params">
+        <div class="param-card">
+            <span class="param-label">검색 키워드</span>
+            <span class="param-value">${keyword}</span>
+        </div>
+        <div class="param-card">
+            <span class="param-label">현재 페이지</span>
+            <span class="param-value">${page}</span>
+        </div>
+    </div>
+
+    <div class="results-summary">
+        <h3>📊 검색 결과 요약</h3>
+        <p>키워드 '<strong>${keyword}</strong>'에 대한 검색 결과</p>
+        <p><strong>${resultCount}</strong>개의 결과를 찾았습니다.</p>
+    </div>
+
+    <div class="pagination-info">
+        <strong>📄 페이지 정보:</strong> ${page} / ${totalPages} 페이지
+    </div>
+
+    <div class="tech-info">
+        <strong>🔧 기술 정보:</strong><br>
+        • 컨트롤러: @Controller SearchController<br>
+        • 매핑: @RequestMapping(value="/search", method="GET")<br>
+        • 파라미터: @RequestParam("keyword") String keyword, @RequestParam(value="page", defaultValue="1") int page<br>
+        • 뷰: search-results.html 템플릿<br>
+        • 특징: @RequestParam으로 개별 파라미터 바인딩, 기본값 처리
+    </div>
+</div>
+</body>
+</html>

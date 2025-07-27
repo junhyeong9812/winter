@@ -1,6 +1,7 @@
 package winter.dispatcher;
 
 import winter.controller.ProductController;
+import winter.controller.SearchController;
 
 /**
  * 레거시 Controller 인터페이스와 어노테이션 기반 핸들러를 통합하여 관리하는 클래스
@@ -41,6 +42,9 @@ public class CombinedHandlerMapping {
         try {
             // 22단계: 어노테이션 기반 컨트롤러들 등록
             annotationHandlerMapping.registerController(ProductController.class);
+
+            // 23단계: 파라미터 바인딩 테스트 컨트롤러 등록
+            annotationHandlerMapping.registerController(SearchController.class);
 
             // 추후 추가될 어노테이션 컨트롤러들을 여기에 등록
             // annotationHandlerMapping.registerController(UserApiController.class);

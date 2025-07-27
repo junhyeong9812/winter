@@ -5,6 +5,7 @@ import winter.http.HttpResponse;
 import winter.view.ModelAndView;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 
 /**
  * 어노테이션 기반 핸들러 메서드를 실행하는 어댑터 (23단계 확장 버전)
@@ -79,12 +80,47 @@ public class AnnotationHandlerAdapter implements HandlerAdapter {
      * @return 메서드 실행 결과
      * @throws Exception 메서드 호출 실패 시
      */
-    private ModelAndView invokeHandlerMethodWithParameterBinding(Object controller, Method method, HttpRequest request, HttpResponse response) {
+    private ModelAndView invokeHandlerMethodWithParameterBinding(Object controller, Method method, HttpRequest request, HttpResponse response) throws Exception {
 
         //메서드의 파라미터 정보 가져오기
+        Parameter[] parameters = method.getParameters();
+        Object[] arguments = new Object[parameters.length];
 
+        //디버깅 정보 출력
+        System.out.println("=== Parameter Binding Debug Info ===");
+        System.out.println("Method: " + method.getName() + " with " + parameters.length + " parameters");
 
-        return null;
+        //각 파라미터에 대해 적절한 값 해결
+        for(int i =0; i < parameters.length; i++){
+            Parameter parameter = parameters[i];
+
+            //파라미터 해결 전략 확인 및 출력
+            String strategy = parameterResolver.getResolutionStrategy(parameter);
+            System.out.println("Parameter " + i + " (" + parameter.getType().getSimpleName() + "): " + strategy);
+            
+            //실제 파라미터 값 해결
+            try{
+                arguments[i] = parameterResolver.resolveParameter(parameter, request, response);
+                System.out.println("  → Resolved value: " + arguments[i]);
+            }catch (Exception e){
+                System.out.println("  → Resolution failed: " + e.getMessage());
+                throw e;
+            }
+        }
+        System.out.println("=====================================");
+
+        //메서드 실행
+        Object result = method.invoke(controller, arguments);
+
+        //반환값이 ModelAndView가 아닌 경우 예외 발생
+        if(!(result instanceof ModelAndView)){
+            throw new IllegalArgumentException(
+                    "Handler method must return ModelAndView. " +
+                    "Method: " + method.getName() + " returned: " +
+                    (result != null ? result.getClass().getName() : "null"));
+        }
+
+        return (ModelAndView) result;
     }
 
     /**

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tag Search Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #74b9ff;
+            padding-bottom: 15px;
+        }
+        .search-summary {
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .tags-display {
+            margin: 30px 0;
+            text-align: center;
+        }
+        .tag {
+            display: inline-block;
+            background: #74b9ff;
+            color: white;
+            padding: 8px 16px;
+            margin: 5px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+        .settings-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #00b894;
+            margin: 25px 0;
+        }
+        .setting-item {
+            margin: 10px 0;
+        }
+        .label {
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .value {
+            color: #636e72;
+            margin-left: 10px;
+        }
+        .results-info {
+            background: #d1f2eb;
+            border: 2px solid #00b894;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .tech-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">🏷️ Tag Search Results</h1>
+
+    <div class="search-summary">
+        <h2>태그 검색 완료!</h2>
+        <p>@RequestParam을 사용한 배열 파라미터 바인딩 테스트</p>
+    </div>
+
+    <div class="tags-display">
+        <h3>검색된 태그들:</h3>
+        <span class="tag">java</span>
+        <span class="tag">spring</span>
+        <span class="tag">mvc</span>
+        <span class="tag">hibernate</span>
+    </div>
+
+    <div class="settings-box">
+        <h3>검색 설정</h3>
+        <div class="setting-item">
+            <span class="label">포함 조건:</span>
+            <span class="value">${includeAll ? '모든 태그 포함' : '일부 태그 포함'}</span>
+        </div>
+        <div class="setting-item">
+            <span class="label">태그 개수:</span>
+            <span class="value">${tags != null ? tags.length : 0}개</span>
+        </div>
+    </div>
+
+    <div class="results-info">
+        <h3>📊 검색 결과</h3>
+        <p><strong>128</strong>개의 항목을 찾았습니다.</p>
+        <p>선택한 태그들과 일치하는 컨텐츠입니다.</p>
+    </div>
+
+    <div class="tech-details">
+        <strong>🔧 기술 정보:</strong><br>
+        • 컨트롤러: @Controller SearchController<br>
+        • 매핑: @RequestMapping(value="/search/tags", method="GET")<br>
+        • 파라미터 특징:<br>
+        &nbsp;&nbsp;- @RequestParam("tags") String[] tags (배열 파라미터)<br>
+        &nbsp;&nbsp;- @RequestParam(value="includeAll", defaultValue="false") boolean includeAll<br>
+        • 특징: 쉼표로 구분된 문자열을 배열로 자동 변환
+    </div>
+</div>
+</body>
+</html>

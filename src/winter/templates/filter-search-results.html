@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Filter Search Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1000px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #fd79a8;
+            padding-bottom: 15px;
+        }
+        .search-summary {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .filter-box {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 5px solid #fd79a8;
+            transition: transform 0.2s ease;
+        }
+        .filter-box:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .filter-title {
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+        .filter-value {
+            color: #34495e;
+            font-size: 1.2em;
+            font-weight: 500;
+        }
+        .rating-display {
+            color: #e17055;
+            font-weight: bold;
+        }
+        .available-badge {
+            background: #00b894;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        .unavailable-badge {
+            background: #636e72;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+        }
+        .results-info {
+            background: #ffeaa7;
+            border: 2px solid #fdcb6e;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .filter-summary {
+            background: #dfe6e9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .tech-details {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">🔍 Filter Search Results</h1>
+
+    <div class="search-summary">
+        <h2>필터 검색 완료!</h2>
+        <p>다양한 타입 변환과 @RequestParam 테스트</p>
+    </div>
+
+    <div class="filters-grid">
+        <div class="filter-box">
+            <span class="filter-title">최소 평점</span>
+            <span class="filter-value rating-display">${minRating != null ? minRating : '제한 없음'} ⭐</span>
+        </div>
+
+        <div class="filter-box">
+            <span class="filter-title">출판일 이후</span>
+            <span class="filter-value">${publishedAfter != null ? publishedAfter : '제한 없음'}</span>
+        </div>
+
+        <div class="filter-box">
+            <span class="filter-title">이용 가능 여부</span>
+            <span class="filter-value">
+                ${isAvailable ? '<span class="available-badge">이용 가능</span>' : '<span class="unavailable-badge">이용 불가</span>'}
+            </span>
+        </div>
+    </div>
+
+    <div class="filter-summary">
+        <h3>🎯 필터 조건 요약</h3>
+        <p><strong>평점 ${minRating != null ? minRating : '0.0'}점 이상, ${publishedAfter != null ? publishedAfter + ' 이후 출판' : '출판일 제한 없음'}, 이용 상태: ${isAvailable ? '가능' : '불가'}</strong></p>
+    </div>
+
+    <div class="results-info">
+        <h3>📊 검색 결과</h3>
+        <p><strong>37</strong>개의 항목이 필터 조건과 일치합니다.</p>
+    </div>
+
+    <div class="tech-details">
+        <strong>🔧 기술 정보:</strong><br>
+        • 컨트롤러: @Controller SearchController<br>
+        • 매핑: @RequestMapping(value="/search/filter", method="GET")<br>
+        • 파라미터 특징:<br>
+        &nbsp;&nbsp;- @RequestParam("minRating") double minRating (실수 타입)<br>
+        &nbsp;&nbsp;- @RequestParam(value="publishedAfter", required=false) String publishedAfter (선택적)<br>
+        &nbsp;&nbsp;- @RequestParam(value="isAvailable", defaultValue="true") boolean isAvailable (부울 타입)<br>
+        • 특징: double, boolean 등 다양한 기본 타입으로 자동 변환
+    </div>
+</div>
+</body>
+</html>

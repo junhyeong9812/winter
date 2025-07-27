@@ -34,7 +34,13 @@ public class ModelAttributeBinder {
 
                     // 파라미터가 존재한다면 setter 메서드 호출로 값 세팅
                     if (paramValue != null) {
-                        method.invoke(instance, paramValue); // String 타입만 처리 (필요 시 변환기 확장 가능)
+                        // setter 메서드의 파라미터 타입 가져오기
+                        Class<?> paramType = method.getParameterTypes()[0];
+                        
+                        // TypeConverter를 사용하여 타입 변환
+                        Object convertedValue = TypeConverter.convert(paramValue, paramType);
+                        
+                        method.invoke(instance, convertedValue);
                     }
                 }
             }

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Form Search Results</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+        .header {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #e91e63;
+            padding-bottom: 15px;
+        }
+        .success-message {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        .form-data {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        .form-title {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border-bottom: 2px solid #e91e63;
+            padding-bottom: 10px;
+        }
+        .form-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .field-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #e91e63;
+        }
+        .field-label {
+            font-weight: bold;
+            color: #6c757d;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+        .field-value {
+            color: #212529;
+            font-size: 1.1em;
+        }
+        .summary-section {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .results-count {
+            background: #fff3e0;
+            border: 1px solid #ff9800;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .tech-note {
+            margin-top: 30px;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            border-radius: 10px;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 class="header">📝 Form Search Results</h1>
+
+    <div class="success-message">
+        <h2>${message}</h2>
+        <p>@ModelAttribute를 사용한 객체 바인딩 테스트</p>
+    </div>
+
+    <div class="form-data">
+        <div class="form-title">📋 바인딩된 SearchForm 객체 데이터</div>
+        <div class="form-fields">
+            <div class="field-item">
+                <span class="field-label">Keyword</span>
+                <span class="field-value">${searchForm.keyword}</span>
+            </div>
+
+            <div class="field-item">
+                <span class="field-label">Category</span>
+                <span class="field-value">${searchForm.category != null ? searchForm.category : '미지정'}</span>
+            </div>
+
+            <div class="field-item">
+                <span class="field-label">Page</span>
+                <span class="field-value">${searchForm.page}</span>
+            </div>
+
+            <div class="field-item">
+                <span class="field-label">Size</span>
+                <span class="field-value">${searchForm.size}</span>
+            </div>
+
+            <div class="field-item">
+                <span class="field-label">Sort By</span>
+                <span class="field-value">${searchForm.sortBy != null ? searchForm.sortBy : '미지정'}</span>
+            </div>
+
+            <div class="field-item">
+                <span class="field-label">Sort Order</span>
+                <span class="field-value">${searchForm.sortOrder != null ? searchForm.sortOrder : '미지정'}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="summary-section">
+        <h3>📝 SearchForm.getSummary() 결과</h3>
+        <p><strong>${searchForm.summary}</strong></p>
+    </div>
+
+    <div class="results-count">
+        <h3>📊 시뮬레이션 검색 결과</h3>
+        <p><strong>${resultCount}</strong>개의 결과를 찾았습니다.</p>
+    </div>
+
+    <div class="tech-note">
+        <strong>🔧 기술 정보:</strong><br>
+        • 컨트롤러: @Controller SearchController<br>
+        • 매핑: @RequestMapping(value="/search/form", method="POST")<br>
+        • 파라미터: @ModelAttribute SearchForm searchForm, HttpResponse response<br>
+        • 특징: ModelAttributeBinder를 통한 자동 객체 바인딩<br>
+        • 바인딩 과정:<br>
+        &nbsp;&nbsp;1. HTTP 요청 파라미터들을 Map으로 수집<br>
+        &nbsp;&nbsp;2. SearchForm 객체 생성 (기본 생성자)<br>
+        &nbsp;&nbsp;3. setter 메서드를 리플렉션으로 찾아 자동 호출<br>
+        &nbsp;&nbsp;4. 완성된 객체를 메서드 파라미터로 전달<br>
+        • 유효성 검증: keyword 필수값 체크 후 400 에러 처리
+    </div>
+</div>
+</body>
+</html>
