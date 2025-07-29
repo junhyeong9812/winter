@@ -2,7 +2,10 @@ package winter.upload;
 
 import winter.http.HttpRequest;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +66,141 @@ public class MultipartParser {
                 request.getBody(),
                 files
         );
-        
-        
+    }
+
+    /**
+     * Content-Type 헤더에서 boundary를 추출합니다.
+     *
+     * 예 : "multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW"
+     *
+     * @param contentType Content-Type 헤더값
+     * @return boundary 문자열, 없으면 null
+     * */
+    private static String extractBoundary(String contentType){
+        String[] parts = contentType.split(";");
+        for(String part : parts){
+            part = part.trim();
+            if(part.startsWith("boundary=")){
+                String boundary = part.substring("boundary=".length()).trim();
+                //따옴표 제거
+                if(boundary.startsWith("\"") && boundary.endsWith("\"")){
+                    boundary = boundary.substring(1,boundary.length() -1);
+                }
+                return boundary;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * 요청 본문을 문자열로 읽습니다.
+     *
+     * @param request HTTP 요청
+     * @return 요청 본문 문자열
+     * @throws IOException 읽기 실패 시
+     * */
+    private static String readRequestBody(HttpRequest request) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        BufferedReader reader =request.getBody();
+        String line;
+
+        //첫 번째 줄은 CRLF 없이 읽기
+        boolean first =true;
+        while ((line = reader.readLine()) != null){
+            if(!first){
+                sb.append(CRLF);
+            }
+            sb.append(line);
+            first =false;
+        }
+        return sb.toString();
+    }
+
+    /**
+     * boundary를 기준으로 파트를 분리하고 파싱합니다.
+     *
+     * @param body 요청 본문
+     * @param boundary boundary 문자열
+     * @param parameters 일반 파라미터 맵 (출력)
+     * @param files 파일 맵 (출력)
+     * */
+    private static void parseParts(String body,String boundary,
+                                   Map<String ,List<String>> parameters,
+                                   Map<String, List<MultipartFile>> files){
+
+        String delimiter = BOUNDARY_PREFIX + boundary;
+        String endDelimiter =delimiter + BOUNDARY_PREFIX;
+
+        //시작과 끝 boundary 제거
+        int startIndex = body.indexOf(delimiter);
+        int endIndex =  body.lastIndexOf(endDelimiter);
+
+        if(startIndex == -1){
+            return; //boundary를 찾을 수 없음
+        }
+
+        String content = body.substring(startIndex + delimiter.length(),
+                endIndex != -1 ? endIndex : body.length());
+
+        //각 파트 분리
+        String[] parts = content.split(delimiter);
+
+        for(String part : parts){
+            part = part.trim();
+            if(!part.isEmpty()){
+                parsePart(part,parameters,files);
+            }
+        }
+    }
+
+    /**
+     * 개별 파트를 파싱합니다.
+     * @param part 파트 내용
+     * @param parameters 일반 파라미터 맵 (출력)
+     * @param files 파일 맵 (출력)
+     * */
+    private static void parsePart(String part,
+                                  Map<String,List<String>> parameters,
+                                  Map<String, List<MultipartFile>> files){
+        //헤더와 바디 분리
+        int headerEndIndex = part.indexOf(CRLF + CRLF);
+        if(headerEndIndex == -1){
+            return;
+        }
+
+        String headerSection = part.substring(0, headerEndIndex);
+        String bodySection = part.substring(headerEndIndex + (CRLF + CRLF).length());
+
+        //헤더 파싱
+        Map<String, String> headers = parseHeaders(headerSection);
+
+        //Content-Disposition 파싱
+        String contentDisposition = headers.get(CONTENT_DISPOSITION.toLowerCase());
+        if( contentDisposition == null || !contentDisposition.toLowerCase().contains(FORM_DATA)){
+            return;
+        }
+
+        String name = extractAttribute(contentDisposition, NAME);
+        String filename = extractAttribute(contentDisposition, FILENAME);
+
+        if(name == null) {
+            return;
+        }
+
+        // 파일 vs 일반 파라미터 구분
+        if(filename != null){
+            //파일 파라미터
+            String contentType = headers.get(CONTENT_TYPE.toLowerCase());
+            byte[] fileContent = bodySection.getBytes(StandardCharsets.UTF_8);
+
+            MultipartFile multipartFile = new StandardMultipartFile(
+                    name,filename,contentType,fileContent
+            );
+            files.computeIfAbsent(name, k -> new ArrayList<>()).add(multipartFile);
+        }else {
+            //일반 파라미터
+            parameters.computeIfAbsent(name,k-> new ArrayList<>()).add(bodySection);
+        }
     }
 
 }
