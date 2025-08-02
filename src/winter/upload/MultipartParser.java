@@ -203,4 +203,67 @@ public class MultipartParser {
         }
     }
 
+    /**
+     * 헤더 섹션을 파싱하여 맵으로 변환합니다.
+     *
+     * @param headerSection 헤더 섹션 문자열
+     * @return 헤더명(소문자) -> 헤더값 맵
+     * */
+    private static Map<String, String> parseHeaders(String headerSection){
+        Map<String, String> headers = new HashMap<>();
+        String[] lines = headerSection.split(CRLF);
+
+        for(String line :lines){
+            line = line.trim();
+            if(line.isEmpty()){
+                continue;
+            }
+            int colonIndex = line.indexOf(":");
+            if(colonIndex > 0){
+                String headerName = line.substring(0,colonIndex).trim().toLowerCase();
+                String headerValue = line.substring(colonIndex + 1).trim();
+                headers.put(headerName,headerValue);
+            }
+        }
+        return headers;
+    }
+
+    /**
+     * Content-Disposition에서 특정 속성값을 추출합니다.
+     *
+     * 예: 'form-data; name = "file"; filename = "test.txt"에서
+     * extractAttribute(contentDisposition, "name") -> "file"
+     *
+     * @param contentDisposition Content-Disposition 헤더값
+     * @param attributeName 추출할 속성명
+     * @return 속성값, 없으면 null
+     * */
+    private static String extractAttribute(String contentDisposition,String attributeName){
+        // name = "value" 또는 name = value 형태 찾기
+        String pattern1 = attributeName + "=\"";
+        String pattern2 = attributeName + "=";
+
+        int startIndex = contentDisposition.indexOf(pattern1);
+        if(startIndex != -1){
+            //name="value" 형태
+            startIndex += pattern1.length();
+            int endIndex = contentDisposition.indexOf('"',startIndex);
+            if(endIndex != -1){
+                return contentDisposition.substring(startIndex,endIndex);
+            }
+        }else {
+            //name = value 형태 (따옴표 없음)
+            startIndex = contentDisposition.indexOf(pattern2);
+            if(startIndex != -1){
+                startIndex += pattern2.length();
+                int endIndex = contentDisposition.indexOf(":", startIndex);
+                if(endIndex == -1){
+                    endIndex = contentDisposition.length();
+                }
+                return contentDisposition.substring(startIndex,endIndex).trim();
+            }
+        }
+        return null;
+    }
+
 }
