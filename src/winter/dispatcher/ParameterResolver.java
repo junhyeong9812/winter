@@ -4,6 +4,7 @@ import winter.annotation.ModelAttribute;
 import winter.annotation.RequestParam;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
+import winter.upload.MultipartFile;
 import winter.util.ModelAttributeBinder;
 import winter.util.TypeConverter;
 
@@ -46,7 +47,17 @@ public class ParameterResolver {
             return response;
         }
 
-        // 3. @RequestParam 어노테이션 처리
+        // 3. MultipartFile 타입 처리 (새로 추가)
+        if (paramType.equals(MultipartFile.class)) {
+            return resolveMultipartFile(parameter, request);
+        }
+
+        // 4. MultipartFile[] 배열 타입 처리 (새로 추가)
+        if (paramType.equals(MultipartFile[].class)) {
+            return resolveMultipartFileArray(parameter, request);
+        }
+
+        // 5. @RequestParam 어노테이션 처리
         RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
         if(requestParam != null){
             return resolveRequestParam(requestParam, paramType,request);
@@ -169,6 +180,8 @@ public class ParameterResolver {
 
         return "Unsupported parameter type: " + paramType.getName();
     }
+
+
 
 
 }
