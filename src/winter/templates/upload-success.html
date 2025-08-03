@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파일 업로드 성공 - Winter Framework</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .success-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 64px;
+            color: #28a745;
+            margin-bottom: 20px;
+        }
+
+        .success-message {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .file-details {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #495057;
+        }
+
+        .detail-value {
+            color: #6c757d;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="success-container">
+    <div class="success-icon">✅</div>
+
+    <h1>파일 업로드 성공!</h1>
+
+    <div class="success-message">
+        <h3>파일이 성공적으로 업로드되었습니다.</h3>
+        <p>파일 이름: <strong>${filename}</strong></p>
+    </div>
+
+    <div class="file-details">
+        <h4>업로드된 파일 정보</h4>
+
+        <div class="detail-row">
+            <span class="detail-label">원본 파일명:</span>
+            <span class="detail-value">${filename}</span>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">저장 경로:</span>
+            <span class="detail-value">${savedPath}</span>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">파일 크기:</span>
+            <span class="detail-value">${fileSize}</span>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">파일 형식:</span>
+            <span class="detail-value">${contentType}</span>
+        </div>
+
+        <div class="detail-row">
+            <span class="detail-label">설명:</span>
+            <span class="detail-value">${description}</span>
+        </div>
+    </div>
+
+    <!-- 이미지 파일인 경우 -->
+    <div style="display: ${isImage ? 'block' : 'none'};">
+        <h4>이미지 파일</h4>
+        <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <p>📷 이미지 파일이 업로드되었습니다.</p>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <a href="/upload/form" class="btn">다른 파일 업로드</a>
+        <a href="/products" class="btn">상품 목록으로</a>
+        <a href="/hello" class="btn">홈으로</a>
+    </div>
+</div>
+</body>
+</html>

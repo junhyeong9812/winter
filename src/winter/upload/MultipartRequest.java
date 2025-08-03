@@ -25,10 +25,10 @@ public class MultipartRequest extends HttpRequest {
      * @param body 요청 본문 BufferedReader
      * @param files 업로드된 파일 맵
      */
-    public MultipartRequest(String method, String path, Map<String, String> headers,
+    public MultipartRequest( String path,String method, Map<String, String> headers,
                             Map<String, List<String>> parameters, BufferedReader body,
                             Map<String, List<MultipartFile>> files) {
-        super(method, path, headers, parameters, body);
+        super(path,method, headers, parameters, body);
         this.files = files != null ? files : new HashMap<>();
     }
 

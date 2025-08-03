@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>다중 파일 업로드 결과 - Winter Framework</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .upload-result-container {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .result-summary {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .success-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-success { color: #28a745; }
+        .stat-error { color: #dc3545; }
+        .stat-total { color: #007bff; }
+
+        .file-results {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .file-result-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .file-result-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+
+        .file-result-error {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+
+        .file-info {
+            flex: 1;
+        }
+
+        .file-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .file-details {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .file-status {
+            text-align: right;
+            min-width: 80px;
+        }
+
+        .status-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .status-error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="upload-result-container">
+    <h1>다중 파일 업로드 결과</h1>
+
+    <div class="result-summary">
+        <h3>업로드 완료</h3>
+        <div class="success-stats">
+            <div class="stat-item">
+                <span class="stat-number stat-total">${totalFiles}</span>
+                <small>전체 파일</small>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number stat-success">${successCount}</span>
+                <small>성공</small>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number stat-error">${failCount}</span>
+                <small>실패</small>
+            </div>
+        </div>
+        <p><strong>카테고리:</strong> ${category}</p>
+        <p><strong>총 파일 크기:</strong> ${totalSize}</p>
+    </div>
+
+    <div class="file-results">
+        <h4 style="padding: 15px 20px; margin: 0; background: #e9ecef;">
+            파일별 업로드 결과
+        </h4>
+
+        <!-- 여기에 results 리스트의 각 항목을 반복 표시 -->
+        <!-- 성공한 파일들 -->
+        <c:forEach var="result" items="${results}">
+            <c:if test="${result.success}">
+                <div class="file-result-item file-result-success">
+                    <div class="file-info">
+                        <div class="file-name">${result.originalFilename}</div>
+                        <div class="file-details">
+                            크기: ${result.formattedSize} | 타입: ${result.contentType}
+                        </div>
+                        <div style="font-size: 12px; color: #28a745; margin-top: 5px;">
+                            저장됨: ${result.savedPath}
+                        </div>
+                    </div>
+                    <div class="file-status">
+                        <div class="status-success">✅ 성공</div>
+                    </div>
+                </div>
+            </c:if>
+        </c:forEach>
+
+        <!-- 실패한 파일들 -->
+        <c:forEach var="result" items="${results}">
+            <c:if test="${!result.success}">
+                <div class="file-result-item file-result-error">
+                    <div class="file-info">
+                        <div class="file-name">${result.originalFilename}</div>
+                        <div class="file-details">
+                            크기: ${result.formattedSize} | 타입: ${result.contentType}
+                        </div>
+                        <div style="font-size: 12px; color: #dc3545; margin-top: 5px;">
+                            오류: ${result.errorMessage}
+                        </div>
+                    </div>
+                    <div class="file-status">
+                        <div class="status-error">❌ 실패</div>
+                    </div>
+                </div>
+            </c:if>
+        </c:forEach>
+    </div>
+
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="/upload/form" class="btn">다른 파일 업로드</a>
+        <a href="/products" class="btn">상품 목록으로</a>
+        <a href="/hello" class="btn">홈으로</a>
+    </div>
+</div>
+</body>
+</html>

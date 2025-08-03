@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로필 업데이트 완료 - Winter Framework</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .profile-container {
+            max-width: 700px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .success-header {
+            text-align: center;
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .success-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .profile-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .profile-header {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .avatar-section {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #fff;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 3px solid #fff;
+        }
+
+        .avatar-placeholder {
+            font-size: 32px;
+            color: #007bff;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .profile-email {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .profile-body {
+            padding: 20px;
+        }
+
+        .profile-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #495057;
+            min-width: 100px;
+        }
+
+        .field-value {
+            color: #6c757d;
+            flex: 1;
+            text-align: right;
+        }
+
+        .profile-bio {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+            font-style: italic;
+            color: #495057;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="profile-container">
+    <div class="success-header">
+        <div class="success-icon">👤</div>
+        <h1>프로필 업데이트 완료!</h1>
+        <p>사용자 프로필이 성공적으로 업데이트되었습니다.</p>
+    </div>
+
+    <div class="profile-card">
+        <div class="profile-header">
+            <div class="avatar-section">
+                <div class="avatar-placeholder">
+                    ${hasAvatar ? '📷' : '👤'}
+                </div>
+            </div>
+            <div class="profile-name">${profile.name}</div>
+            <div class="profile-email">${profile.email}</div>
+        </div>
+
+        <div class="profile-body">
+            <div class="profile-field">
+                <span class="field-label">이름:</span>
+                <span class="field-value">${profile.name}</span>
+            </div>
+
+            <div class="profile-field">
+                <span class="field-label">이메일:</span>
+                <span class="field-value">${profile.email}</span>
+            </div>
+
+            <div class="profile-field" style="display: ${profile.phone ? 'flex' : 'none'};">
+                <span class="field-label">전화번호:</span>
+                <span class="field-value">${profile.phone}</span>
+            </div>
+
+            <div class="profile-field" style="display: ${profile.website ? 'flex' : 'none'};">
+                <span class="field-label">웹사이트:</span>
+                <span class="field-value">${profile.website}</span>
+            </div>
+
+            <div class="profile-field" style="display: ${profile.age > 0 ? 'flex' : 'none'};">
+                <span class="field-label">나이:</span>
+                <span class="field-value">${profile.age}세</span>
+            </div>
+
+            <div class="profile-field">
+                <span class="field-label">프로필 공개:</span>
+                <span class="field-value">${profile.public ? '공개' : '비공개'}</span>
+            </div>
+
+            <div style="display: ${hasAvatar ? 'block' : 'none'};">
+                <div class="profile-field">
+                    <span class="field-label">아바타:</span>
+                    <span class="field-value">업로드됨 ✅</span>
+                </div>
+                <div style="font-size: 12px; color: #6c757d; text-align: center; margin-top: 10px;">
+                    저장 경로: ${profile.avatarPath}
+                </div>
+            </div>
+
+            <div style="display: ${profile.bio ? 'block' : 'none'};">
+                <div class="profile-bio">
+                    <strong>자기소개:</strong><br>
+                    ${profile.bio}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="/upload/form" class="btn">파일 업로드</a>
+        <a href="/products" class="btn">상품 목록으로</a>
+        <a href="/hello" class="btn">홈으로</a>
+    </div>
+
+    <div style="text-align: center; font-size: 12px; color: #6c757d; margin-top: 15px;">
+        업데이트 시간: <span id="updateTime"></span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const updateTime = ${updateTime};
+        if (updateTime) {
+            document.getElementById('updateTime').textContent =
+                new Date(updateTime).toLocaleString('ko-KR');
+        }
+    });
+</script>
+</body>
+</html>

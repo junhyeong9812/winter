@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파일 업로드 오류 - Winter Framework</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .error-container {
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 64px;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error-details {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .error-code {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 0 5px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .help-section {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+<div class="error-container">
+    <div class="error-icon">❌</div>
+
+    <h1>파일 업로드 실패</h1>
+
+    <div class="error-message">
+        <h3>업로드 중 오류가 발생했습니다</h3>
+        <p><strong>${error}</strong></p>
+    </div>
+
+    <div class="error-details">
+        <h4>오류 정보</h4>
+        <p><strong>오류 코드:</strong> <span class="error-code">${errorCode}</span></p>
+
+        <!-- 파일 크기 오류인 경우 -->
+        <div style="display: ${errorCode == 'FILE_TOO_LARGE' ? 'block' : 'none'};">
+            <p><strong>실제 파일 크기:</strong> ${actualSize}</p>
+            <p><strong>최대 허용 크기:</strong> ${maxSize}</p>
+        </div>
+
+        <!-- 확장자 오류인 경우 -->
+        <div style="display: ${errorCode == 'INVALID_EXTENSION' ? 'block' : 'none'};">
+            <p><strong>파일명:</strong> ${filename}</p>
+            <p><strong>허용되는 확장자:</strong> ${allowedExtensions}</p>
+        </div>
+    </div>
+
+    <div class="help-section">
+        <h5>💡 해결 방법</h5>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+            <li>파일 크기가 너무 큰 경우: 더 작은 파일을 선택하거나 파일을 압축해보세요</li>
+            <li>허용되지 않은 확장자: jpg, png, pdf, txt, doc 등의 안전한 파일 형식을 사용하세요</li>
+            <li>파일을 선택하지 않은 경우: 업로드할 파일을 먼저 선택해주세요</li>
+            <li>안전하지 않은 파일명: 특수문자나 한글이 포함된 파일명을 영문으로 변경해보세요</li>
+        </ul>
+    </div>
+
+    <div style="margin-top: 30px;">
+        <a href="/upload/form" class="btn">다시 시도</a>
+        <a href="/products" class="btn">상품 목록으로</a>
+        <a href="/hello" class="btn">홈으로</a>
+    </div>
+</div>
+</body>
+</html>

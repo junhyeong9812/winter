@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파일 업로드 - Winter Framework</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .upload-section {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            border: 2px dashed #007bff;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9ff;
+            margin: 10px 0;
+        }
+
+        .upload-info {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="upload-container">
+    <h1>파일 업로드 테스트</h1>
+    <p>Winter Framework의 파일 업로드 기능을 테스트할 수 있습니다.</p>
+
+    <!-- 업로드 설정 정보 -->
+    <div class="upload-info">
+        <strong>업로드 설정:</strong><br>
+        최대 파일 크기: ${maxFileSize}<br>
+        허용되는 확장자: ${allowedExtensions}<br>
+        업로드 디렉토리: ${uploadDir}
+    </div>
+
+    <!-- 단일 파일 업로드 -->
+    <div class="upload-section">
+        <h2>1. 단일 파일 업로드</h2>
+        <form action="/upload" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="singleFile">파일 선택:</label>
+                <div class="file-input">
+                    <input type="file" id="singleFile" name="file" class="form-control" required>
+                    <p style="margin: 10px 0 0 0; color: #666;">파일을 선택하거나 여기에 드래그하세요</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="description">파일 설명:</label>
+                <textarea id="description" name="description" class="form-control" rows="3"
+                          placeholder="업로드하는 파일에 대한 설명을 입력하세요..."></textarea>
+            </div>
+
+            <button type="submit" class="btn">업로드</button>
+        </form>
+    </div>
+
+    <!-- 다중 파일 업로드 -->
+    <div class="upload-section">
+        <h2>2. 다중 파일 업로드</h2>
+        <form action="/upload/multiple" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label class="form-label" for="multipleFiles">파일들 선택:</label>
+                <div class="file-input">
+                    <input type="file" id="multipleFiles" name="files" class="form-control" multiple required>
+                    <p style="margin: 10px 0 0 0; color: #666;">여러 파일을 선택하세요</p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="category">카테고리:</label>
+                <select id="category" name="category" class="form-control">
+                    <option value="documents">문서</option>
+                    <option value="images">이미지</option>
+                    <option value="media">미디어</option>
+                    <option value="others">기타</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn">업로드</button>
+        </form>
+    </div>
+
+    <!-- 프로필 + 아바타 업로드 -->
+    <div class="upload-section">
+        <h2>3. 프로필 정보 + 아바타 업로드</h2>
+        <form action="/upload/profile" method="post" enctype="multipart/form-data">
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">
+                    <div class="form-group">
+                        <label class="form-label" for="profileName">이름 *:</label>
+                        <input type="text" id="profileName" name="name" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="profileEmail">이메일 *:</label>
+                        <input type="email" id="profileEmail" name="email" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="profilePhone">전화번호:</label>
+                        <input type="text" id="profilePhone" name="phone" class="form-control">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="profileBio">자기소개:</label>
+                        <textarea id="profileBio" name="bio" class="form-control" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div style="flex: 1;">
+                    <div class="form-group">
+                        <label class="form-label" for="profileAvatar">아바타 이미지:</label>
+                        <div class="file-input">
+                            <input type="file" id="profileAvatar" name="avatar" class="form-control" accept="image/*">
+                            <p style="margin: 10px 0 0 0; color: #666;">이미지 파일만 (최대 5MB)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">프로필 업데이트</button>
+        </form>
+    </div>
+
+    <div style="margin-top: 30px; text-align: center;">
+        <a href="/products" class="btn">상품 목록으로</a>
+        <a href="/hello" class="btn">홈으로</a>
+    </div>
+</div>
+</body>
+</html>

@@ -1,5 +1,6 @@
 package winter.dispatcher;
 
+import winter.controller.FileUploadController;
 import winter.controller.ProductController;
 import winter.controller.SearchController;
 
@@ -45,6 +46,9 @@ public class CombinedHandlerMapping {
 
             // 23단계: 파라미터 바인딩 테스트 컨트롤러 등록
             annotationHandlerMapping.registerController(SearchController.class);
+
+            // 24단계: 파일 업로드 테스트 컨트롤러 등록
+            annotationHandlerMapping.registerController(FileUploadController.class);
 
             // 추후 추가될 어노테이션 컨트롤러들을 여기에 등록
             // annotationHandlerMapping.registerController(UserApiController.class);

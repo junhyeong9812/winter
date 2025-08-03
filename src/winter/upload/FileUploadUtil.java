@@ -18,9 +18,13 @@ import java.util.regex.Pattern;
  */
 public class FileUploadUtil {
 
-    // 위험한 파일명 패턴들
+    // ✅ 수정: 진짜 위험한 문자만 포함 (점과 하이픈 제외)
     private static final Pattern DANGEROUS_FILENAME_PATTERN =
-            Pattern.compile(".*[<>:\"|?*\\\\/.]+.*");
+            Pattern.compile(".*[<>:\"|?*\\\\]+.*");
+
+    // ✅ 수정: 경로 순회 공격 패턴 별도 검사
+    private static final Pattern PATH_TRAVERSAL_PATTERN =
+            Pattern.compile(".*(\\.\\.[\\/\\\\]|[\\/\\\\]\\.\\.|^\\.\\.[\\/\\\\]|^[\\.\\/\\\\]+).*");
 
     // 실행 파일 확장자들 (보안상 위험)
     private static final String[] DANGEROUS_EXTENSIONS = {
@@ -268,23 +272,32 @@ public class FileUploadUtil {
     }
 
     /**
-     * 파일명이 안전한지 검증합니다.
+     * ✅ 수정: 파일명이 안전한지 검증합니다. (더 관대한 검증)
      *
      * @param filename 파일명
      * @return 안전하면 true
      */
     public static boolean isSafeFilename(String filename) {
         if (filename == null || filename.trim().isEmpty()) {
+            System.out.println("DEBUG: 파일명이 null이거나 비어있음");
             return false;
         }
 
-        // 위험한 패턴 확인
+        // ✅ 수정: 진짜 위험한 문자만 체크
         if (DANGEROUS_FILENAME_PATTERN.matcher(filename).matches()) {
+            System.out.println("DEBUG: 위험한 문자 발견: " + filename);
+            return false;
+        }
+
+        // ✅ 추가: 경로 순회 공격 별도 체크
+        if (PATH_TRAVERSAL_PATTERN.matcher(filename).matches()) {
+            System.out.println("DEBUG: 경로 순회 공격 패턴 발견: " + filename);
             return false;
         }
 
         // 위험한 확장자 확인
         if (isDangerousExtension(filename)) {
+            System.out.println("DEBUG: 위험한 확장자: " + filename);
             return false;
         }
 
@@ -296,10 +309,12 @@ public class FileUploadUtil {
 
         for (String reserved : reservedNames) {
             if (reserved.equals(nameWithoutExt)) {
+                System.out.println("DEBUG: Windows 예약어 발견: " + filename);
                 return false;
             }
         }
 
+        System.out.println("DEBUG: 파일명 안전성 검사 통과: " + filename);
         return true;
     }
 

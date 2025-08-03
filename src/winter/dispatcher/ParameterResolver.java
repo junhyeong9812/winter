@@ -5,10 +5,12 @@ import winter.annotation.RequestParam;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
 import winter.upload.MultipartFile;
+import winter.upload.MultipartRequest;
 import winter.util.ModelAttributeBinder;
 import winter.util.TypeConverter;
 
 import java.lang.reflect.Parameter;
+import java.util.List;
 
 /**
  * 메서드 파라미터를 해결(resolve)하는 전략 클래스
@@ -166,6 +168,19 @@ public class ParameterResolver {
         if(paramType.equals(HttpResponse.class)){
             return "HttpResponse injection";
         }
+        // MultipartFile 처리 전략
+        if (paramType.equals(MultipartFile.class)) {
+            RequestParam rp = parameter.getAnnotation(RequestParam.class);
+            String paramName = rp != null ? rp.value() : parameter.getName();
+            return String.format("MultipartFile binding for parameter '%s'", paramName);
+        }
+        if (paramType.equals(MultipartFile[].class)) {
+            RequestParam rp = parameter.getAnnotation(RequestParam.class);
+            String paramName = rp != null ? rp.value() : parameter.getName();
+            return String.format("MultipartFile[] array binding for parameter '%s'", paramName);
+        }
+
+        // 일반 파라미터 처리 전략
         if (parameter.getAnnotation(RequestParam.class) != null) {
             RequestParam rp = parameter.getAnnotation(RequestParam.class);
             return String.format("@RequestParam('%s', required=%s, defaultValue='%s')",
@@ -181,7 +196,86 @@ public class ParameterResolver {
         return "Unsupported parameter type: " + paramType.getName();
     }
 
+    /**
+     * MultipartFile 타입 파라미터 처리
+     *
+     * @param parameter 파라미터 정보
+     * @param request HTTP 요청
+     * @return 업로드된 파일 또는 null
+     * */
+    private MultipartFile resolveMultipartFile(Parameter parameter,HttpRequest request){
+        if(!(request instanceof MultipartRequest)) {
+            throw new IllegalArgumentException(
+                    "MultipartFile parameter requires multipart/form-data request");
+        }
 
+        MultipartRequest multipartRequest = (MultipartRequest) request;
+
+        //@Reequest 어노테이션에서 파라미터명 추출
+        String paramName = getParameterName(parameter);
+
+        MultipartFile file = multipartRequest.getFile(paramName);
+
+        //required 속성 확인
+        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+        if (requestParam != null && requestParam.required() && (file == null || file.isEmpty())){
+            throw new IllegalArgumentException("Required file parameter '" + paramName + "' is missing or empty");
+        }
+        
+        return file;
+    }
+
+    /**
+     * MultipartFile[] 배열 타입 파라미터 처리
+     *
+     * @param parameter 파라미터 정보
+     * @param request HTTP 요청
+     * @return 업로드된 파일 배열
+     */
+    private MultipartFile[] resolveMultipartFileArray(Parameter parameter, HttpRequest request) {
+        if (!(request instanceof MultipartRequest)) {
+            throw new IllegalArgumentException(
+                    "MultipartFile[] parameter requires multipart/form-data request");
+        }
+
+        MultipartRequest multipartRequest = (MultipartRequest) request;
+
+        // @RequestParam 어노테이션에서 파라미터명 추출
+        String paramName = getParameterName(parameter);
+
+        List<MultipartFile> files = multipartRequest.getFiles(paramName);
+
+        // required 속성 확인
+        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+        if (requestParam != null && requestParam.required() && (files == null || files.isEmpty())) {
+            throw new IllegalArgumentException("Required file parameter '" + paramName + "' is missing or empty");
+        }
+
+        return files != null ? files.toArray(new MultipartFile[0]) : new MultipartFile[0];
+    }
+
+    /**
+     * 파라미터명을 추출합니다.
+     * @RequestParam 어노테이션의 value 또는 name 속성을 우선 사용하고,
+     * 없으면 파라미터의 실제 이름을 사용합니다.
+     *
+     * @param parameter 파라미터 정보
+     * @return 파라미터명
+     * */
+    private String getParameterName(Parameter parameter){
+        RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
+        if(requestParam != null){
+            String paramName = requestParam.value();
+            if(paramName.isEmpty()){
+                paramName = requestParam.name();
+            }
+            if ( !paramName.isEmpty()){
+                return paramName;
+            }
+        }
+        //파라미터의 실제 이름 사용 (컴파일 시 - parameters 옵션 필요)
+        return parameter.getName();
+    }
 
 
 }

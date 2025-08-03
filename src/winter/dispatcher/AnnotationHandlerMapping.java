@@ -76,6 +76,10 @@ public class AnnotationHandlerMapping {
      * @return 매칭되는 HandlerMethod, 없으면 null
      */
     public HandlerMethod getHandler(String path, String httpMethod) {
+        System.out.println("=== AnnotationHandlerMapping.getHandler() 디버깅 ===");
+        System.out.println("요청 경로: '" + path + "'");
+        System.out.println("요청 메서드: '" + httpMethod + "'");
+        System.out.println("등록된 핸들러 수: " + handlerMethods.size());
         for (HandlerMethod handlerMethod : handlerMethods) {
             if (handlerMethod.matches(path, httpMethod)) {
                 return handlerMethod;

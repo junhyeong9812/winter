@@ -5,6 +5,11 @@ import winter.dispatcher.Dispatcher;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
 
+import java.io.BufferedReader;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+
 public class WinterMain {
     public static void main(String[] args) {
         System.out.println("=== WinterFramework Start ===");
@@ -26,7 +31,23 @@ public class WinterMain {
         // 23단계: 파라미터 바인딩 테스트
         testParameterBinding(dispatcher);
 
+        // 24단계: 파일 업로드 테스트
+        testFileUpload(dispatcher);
+
         System.out.println("\n=== WinterFramework Test Complete ===");
+    }
+
+    /**
+     * Multipart 요청을 생성하는 헬퍼 메서드
+     */
+    private static HttpRequest createMultipartRequest(String path, String boundary, String multipartBody) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", "multipart/form-data; boundary=" + boundary);
+        headers.put("Content-Length", String.valueOf(multipartBody.length()));
+
+        BufferedReader bodyReader = new BufferedReader(new StringReader(multipartBody));
+
+        return new HttpRequest(path, "POST", headers, new HashMap<>(), bodyReader);
     }
 
     /**
@@ -188,5 +209,263 @@ public class WinterMain {
         jsonSearchRequest.addHeader("Accept", "application/json");
         HttpResponse jsonSearchResponse = new HttpResponse();
         dispatcher.dispatch(jsonSearchRequest, jsonSearchResponse);
+    }
+
+    /**
+     * 24단계: 파일 업로드 기능 테스트
+     */
+    private static void testFileUpload(Dispatcher dispatcher) {
+        System.out.println("\n--- 24단계: 파일 업로드 테스트 ---");
+
+        // 테스트 1: 파일 업로드 폼 페이지 요청
+        System.out.println("\n[테스트 1] GET /upload/form - 파일 업로드 폼 페이지");
+        HttpRequest formRequest = new HttpRequest("/upload/form", "GET");
+        HttpResponse formResponse = new HttpResponse();
+        dispatcher.dispatch(formRequest, formResponse);
+
+        // 테스트 2: 단일 파일 업로드 - 실제 multipart 바이너리 시뮬레이션
+        System.out.println("\n[테스트 2] POST /upload - 실제 multipart 데이터 시뮬레이션");
+        try {
+            String boundary = "----WinterFrameworkBoundary1234567890";
+
+            StringBuilder multipartBody = new StringBuilder();
+
+            // description 파라미터
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"description\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("테스트 PDF 파일 업로드").append("\r\n");
+
+            // file 파라미터 (PDF 파일 시뮬레이션)
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"file\"; filename=\"test-document.pdf\"\r\n");
+            multipartBody.append("Content-Type: application/pdf\r\n");
+            multipartBody.append("\r\n");
+            // PDF 파일의 실제 시작 바이트들 시뮬레이션
+            multipartBody.append("%PDF-1.4\n%âãÏÓ\n1 0 obj\n<<\n/Type /Catalog\n/Pages 2 0 R\n>>\nendobj\n");
+            multipartBody.append("이것은 테스트용 PDF 파일 내용입니다.\n");
+            multipartBody.append("Winter Framework 파일 업로드 테스트 - 단일 파일\n");
+            multipartBody.append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("--\r\n");
+
+            // ✅ 수정된 부분: createMultipartRequest 헬퍼 메서드 사용
+            HttpRequest uploadRequest = createMultipartRequest("/upload", boundary, multipartBody.toString());
+
+            System.out.println("단일 파일 Multipart 요청 생성:");
+            System.out.println("- Content-Type: multipart/form-data; boundary=" + boundary);
+            System.out.println("- 파일명: test-document.pdf");
+            System.out.println("- 파일 크기: " + multipartBody.length() + " bytes");
+            System.out.println("- MIME 타입: application/pdf");
+
+            HttpResponse uploadResponse = new HttpResponse();
+            dispatcher.dispatch(uploadRequest, uploadResponse);
+
+        } catch (Exception e) {
+            System.out.println("단일 파일 업로드 시뮬레이션 오류: " + e.getMessage());
+        }
+
+        // 테스트 3: 다중 파일 업로드 - 실제 multipart 바이너리 시뮬레이션
+        System.out.println("\n[테스트 3] POST /upload/multiple - 다중 파일 multipart 시뮬레이션");
+        try {
+            String boundary = "----WinterMultipleBoundary9876543210";
+
+            StringBuilder multipartBody = new StringBuilder();
+
+            // category 파라미터
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"category\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("documents").append("\r\n");
+
+            // 첫 번째 파일 (PDF)
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"files\"; filename=\"doc1.pdf\"\r\n");
+            multipartBody.append("Content-Type: application/pdf\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("%PDF-1.4\n%âãÏÓ\n첫 번째 PDF 문서 내용\nWinter Framework 테스트\n").append("\r\n");
+
+            // 두 번째 파일 (이미지)
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"files\"; filename=\"image1.jpg\"\r\n");
+            multipartBody.append("Content-Type: image/jpeg\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("ÿØÿàJFIFHHÿÛC테스트 JPEG 이미지 바이너리 데이터 시뮬레이션").append("\r\n");
+
+            // 세 번째 파일 (텍스트)
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"files\"; filename=\"readme.txt\"\r\n");
+            multipartBody.append("Content-Type: text/plain\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("=== Winter Framework 파일 업로드 테스트 ===\n");
+            multipartBody.append("이 파일은 다중 파일 업로드 테스트용입니다.\n");
+            multipartBody.append("업로드 시간: ").append(System.currentTimeMillis()).append("\n");
+            multipartBody.append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("--\r\n");
+
+            // ✅ 수정된 부분: createMultipartRequest 헬퍼 메서드 사용
+            HttpRequest multipleRequest = createMultipartRequest("/upload/multiple", boundary, multipartBody.toString());
+
+            System.out.println("다중 파일 Multipart 요청 생성:");
+            System.out.println("- 파일 개수: 3개 (PDF, JPEG, TXT)");
+            System.out.println("- 총 바이너리 크기: " + multipartBody.length() + " bytes");
+            System.out.println("- 카테고리: documents");
+
+            HttpResponse multipleResponse = new HttpResponse();
+            dispatcher.dispatch(multipleRequest, multipleResponse);
+
+        } catch (Exception e) {
+            System.out.println("다중 파일 업로드 시뮬레이션 오류: " + e.getMessage());
+        }
+
+        // 테스트 4: 프로필 + 아바타 업로드 - 실제 multipart 바이너리 시뮬레이션
+        System.out.println("\n[테스트 4] POST /upload/profile - 프로필 + 아바타 multipart 시뮬레이션");
+        try {
+            String boundary = "----WinterProfileBoundary5555666677";
+
+            StringBuilder multipartBody = new StringBuilder();
+
+            // 프로필 필드들
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"name\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("이경민").append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"email\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("user@winter-framework.com").append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"phone\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("010-1234-5678").append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"bio\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("Winter Framework 개발자입니다. 파일 업로드 기능을 테스트하고 있습니다.").append("\r\n");
+
+            // 아바타 이미지 파일
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"avatar\"; filename=\"profile-avatar.jpg\"\r\n");
+            multipartBody.append("Content-Type: image/jpeg\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("ÿØÿàJFIFHHÿÛC프로필 아바타 JPEG 이미지 바이너리 데이터");
+            multipartBody.append("실제로는 여기에 이미지의 바이너리 데이터가 들어갑니다.");
+            multipartBody.append("ÿÙ"); // JPEG 종료 마커
+            multipartBody.append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("--\r\n");
+
+            // ✅ 수정된 부분: createMultipartRequest 헬퍼 메서드 사용
+            HttpRequest profileRequest = createMultipartRequest("/upload/profile", boundary, multipartBody.toString());
+
+            System.out.println("프로필 Multipart 요청 생성:");
+            System.out.println("- 사용자명: 이경민");
+            System.out.println("- 이메일: user@winter-framework.com");
+            System.out.println("- 아바타: profile-avatar.jpg (image/jpeg)");
+            System.out.println("- 총 바이너리 크기: " + multipartBody.length() + " bytes");
+
+            HttpResponse profileResponse = new HttpResponse();
+            dispatcher.dispatch(profileRequest, profileResponse);
+
+        } catch (Exception e) {
+            System.out.println("프로필 업로드 시뮬레이션 오류: " + e.getMessage());
+        }
+
+        // 테스트 5: 파일 정보 조회 (AJAX) - JSON 응답
+        System.out.println("\n[테스트 5] POST /upload/info - 파일 정보 조회 (JSON)");
+        try {
+            String boundary = "----WinterInfoBoundary1111222233";
+
+            StringBuilder multipartBody = new StringBuilder();
+
+            // 정보 조회할 파일
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"file\"; filename=\"analysis-data.png\"\r\n");
+            multipartBody.append("Content-Type: image/png\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append("‰PNGIHDR테스트 PNG 이미지 바이너리 데이터IEND®B`‚");
+            multipartBody.append("\r\n");
+
+            multipartBody.append("--").append(boundary).append("--\r\n");
+
+            // ✅ 수정된 부분: createMultipartRequest 헬퍼 메서드 사용
+            HttpRequest infoRequest = createMultipartRequest("/upload/info", boundary, multipartBody.toString());
+            infoRequest.addHeader("Accept", "application/json"); // JSON 응답 요청
+
+            System.out.println("파일 정보 조회 Multipart 요청:");
+            System.out.println("- 파일명: analysis-data.png");
+            System.out.println("- MIME 타입: image/png");
+            System.out.println("- 응답 형식: JSON");
+
+            HttpResponse infoResponse = new HttpResponse();
+            dispatcher.dispatch(infoRequest, infoResponse);
+
+        } catch (Exception e) {
+            System.out.println("파일 정보 조회 시뮬레이션 오류: " + e.getMessage());
+        }
+
+        // 오류 테스트들
+        System.out.println("\n[테스트 6-10] 오류 시나리오 테스트들...");
+
+        // 테스트 6: 파일 없이 업로드
+        testErrorScenario(dispatcher, "파일 없음", "----EmptyBoundary123",
+                "description", "파일 없이 업로드 테스트", null, null, null);
+
+        // 테스트 7: 허용되지 않은 파일 형식 (.exe)
+        testErrorScenario(dispatcher, "허용되지 않은 확장자", "----ExeBoundary456",
+                "description", "실행파일 업로드", "malware.exe", "application/x-msdownload",
+                "MZ실행파일헤더시뮬레이션");
+
+        // 테스트 8: 파일 크기 초과 (50MB > 10MB 제한)
+        testErrorScenario(dispatcher, "파일 크기 초과", "----LargeBoundary789",
+                "description", "대용량 파일", "huge-video.mp4", "video/mp4",
+                "ftypmp41대용량비디오파일시뮬레이션".repeat(1000)); // 크기 시뮬레이션
+
+        System.out.println("\n[완료] 24단계 파일 업로드 테스트 완료!");
+        System.out.println("실제 브라우저 테스트: http://localhost:8080/upload/form");
+    }
+
+    /**
+     * 오류 시나리오 테스트 헬퍼 메서드
+     */
+    private static void testErrorScenario(Dispatcher dispatcher, String testName, String boundary,
+                                          String descField, String descValue,
+                                          String filename, String contentType, String fileContent) {
+        try {
+            StringBuilder multipartBody = new StringBuilder();
+
+            // description 파라미터
+            multipartBody.append("--").append(boundary).append("\r\n");
+            multipartBody.append("Content-Disposition: form-data; name=\"").append(descField).append("\"\r\n");
+            multipartBody.append("\r\n");
+            multipartBody.append(descValue).append("\r\n");
+
+            // 파일이 있는 경우에만 추가
+            if (filename != null && contentType != null && fileContent != null) {
+                multipartBody.append("--").append(boundary).append("\r\n");
+                multipartBody.append("Content-Disposition: form-data; name=\"file\"; filename=\"").append(filename).append("\"\r\n");
+                multipartBody.append("Content-Type: ").append(contentType).append("\r\n");
+                multipartBody.append("\r\n");
+                multipartBody.append(fileContent).append("\r\n");
+            }
+
+            multipartBody.append("--").append(boundary).append("--\r\n");
+
+            // ✅ 수정된 부분: createMultipartRequest 헬퍼 메서드 사용
+            HttpRequest errorRequest = createMultipartRequest("/upload", boundary, multipartBody.toString());
+
+            System.out.println("오류 테스트 [" + testName + "] - " +
+                    (filename != null ? filename : "파일 없음"));
+
+            HttpResponse errorResponse = new HttpResponse();
+            dispatcher.dispatch(errorRequest, errorResponse);
+
+        } catch (Exception e) {
+            System.out.println("오류 테스트 [" + testName + "] 실행 중 예외: " + e.getMessage());
+        }
     }
 }
