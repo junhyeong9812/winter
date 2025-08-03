@@ -30,86 +30,144 @@ public interface MultipartFile {
 }
 ```
 
-#### MultipartRequest 구현
+#### StandardMultipartFile 구현체
 ```java
-public class MultipartRequest extends HttpRequest {
-    private Map<String, List<MultipartFile>> files;
+public class StandardMultipartFile implements MultipartFile {
+    private final String name;
+    private final String originalFilename;
+    private final String contentType;
+    private final byte[] content;
     
-    // Multipart 요청 파싱
-    public MultipartFile getFile(String name);
-    public List<MultipartFile> getFiles(String name);
-    public Map<String, List<MultipartFile>> getFileMap();
+    // 파일 내용을 메모리에서 관리
+    // 방어적 복사로 데이터 안전성 보장
+    // transferTo()로 효율적인 파일 저장
 }
 ```
 
-### 2. Multipart 파서 (MultipartParser)
+### 2. MultipartRequest 확장 클래스
 
-HTTP 요청에서 Multipart 데이터를 추출하는 파서:
+기존 HttpRequest를 확장하여 파일 업로드 기능을 추가:
+
+```java
+public class MultipartRequest extends HttpRequest {
+    private final Map<String, List<MultipartFile>> files;
+    
+    public MultipartFile getFile(String name);
+    public List<MultipartFile> getFiles(String name);
+    public Map<String, List<MultipartFile>> getFileMap();
+    public boolean hasFiles();
+    public Set<String> getFileNames();
+    public int getFileCount();
+    public long getTotalFileSize();
+}
+```
+
+### 3. MultipartParser - 요청 파싱
+
+RFC 2388 표준에 따른 Multipart 요청 파싱:
 
 ```java
 public class MultipartParser {
-    private static final String BOUNDARY_PREFIX = "--";
-    private static final String CONTENT_DISPOSITION = "Content-Disposition";
-    private static final String CONTENT_TYPE = "Content-Type";
-    
     public static MultipartRequest parseRequest(HttpRequest request) {
-        // Content-Type에서 boundary 추출
-        // 각 part별로 헤더와 바디 분리
-        // 파일과 일반 파라미터 구분
-        // MultipartFile 객체 생성
+        // 1. Content-Type에서 boundary 추출
+        // 2. 요청 본문을 boundary로 분리
+        // 3. 각 part의 헤더와 바디 파싱
+        // 4. 파일과 일반 파라미터 구분
+        // 5. MultipartFile 객체 생성
+        // 6. MultipartRequest 반환
     }
 }
 ```
 
-### 3. 파일 업로드 구성
+### 4. Dispatcher 통합
 
-#### UploadConfig 설정
+Dispatcher에서 Multipart 요청 자동 감지 및 처리:
+
+```java
+public class Dispatcher {
+    public void dispatch(HttpRequest request, HttpResponse response) {
+        // 0. Multipart 요청 감지 및 파싱 (새로 추가)
+        if (isMultipartRequest(request)) {
+            request = MultipartParser.parseRequest(request);
+        }
+        
+        // 기존 처리 흐름 유지...
+    }
+    
+    private boolean isMultipartRequest(HttpRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod()) &&
+               request.getHeader("Content-Type") != null &&
+               request.getHeader("Content-Type").toLowerCase()
+                      .startsWith("multipart/form-data");
+    }
+}
+```
+
+### 5. ParameterResolver 확장
+
+MultipartFile 파라미터 바인딩 지원 추가:
+
+```java
+public class ParameterResolver {
+    public Object resolveParameter(Parameter parameter, HttpRequest request, HttpResponse response) {
+        Class<?> paramType = parameter.getType();
+        
+        // MultipartFile 단일 파일 처리
+        if (paramType.equals(MultipartFile.class)) {
+            return resolveMultipartFile(parameter, request);
+        }
+        
+        // MultipartFile[] 다중 파일 처리
+        if (paramType.equals(MultipartFile[].class)) {
+            return resolveMultipartFileArray(parameter, request);
+        }
+        
+        // 기존 처리 로직...
+    }
+}
+```
+
+### 6. 파일 업로드 설정 관리
+
+#### UploadConfig 클래스
 ```java
 public class UploadConfig {
-    private String uploadDir = "./uploads";      // 업로드 디렉토리
-    private long maxFileSize = 10 * 1024 * 1024; // 최대 파일 크기 (10MB)
-    private long maxRequestSize = 50 * 1024 * 1024; // 최대 요청 크기 (50MB)
-    private String[] allowedExtensions = {".jpg", ".png", ".pdf", ".txt"}; // 허용 확장자
+    private String uploadDir = "./uploads";
+    private long maxFileSize = 10 * 1024 * 1024;  // 10MB
+    private long maxRequestSize = 50 * 1024 * 1024; // 50MB
+    private String[] allowedExtensions = {
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp",
+        ".pdf", ".doc", ".docx", ".txt", ".rtf"
+    };
+    private boolean createUploadDir = true;
+    private boolean overwriteExisting = true;
     
-    // getter/setter 메서드들
+    // 체이닝 방식의 설정 메서드들
+    public UploadConfig setMaxFileSizeMB(int mb);
+    public UploadConfig allowImagesOnly();
+    public UploadConfig allowDocumentsOnly();
 }
 ```
 
 #### FileUploadUtil 유틸리티
 ```java
 public class FileUploadUtil {
+    // 고유 파일명 생성
     public static String generateUniqueFileName(String originalFilename);
-    public static boolean isAllowedExtension(String filename, String[] allowedExtensions);
-    public static void ensureDirectoryExists(String dirPath);
-    public static String getFileExtension(String filename);
+    
+    // 파일 안전성 검증
+    public static boolean isSafeFilename(String filename);
+    public static boolean isAllowedExtension(String filename, String[] allowed);
     public static boolean isValidFileSize(long size, long maxSize);
-}
-```
-
-### 4. 파라미터 리졸버 확장
-
-기존 ParameterResolver에 MultipartFile 바인딩 지원 추가:
-
-```java
-public class ParameterResolver {
-    public Object resolveParameter(Parameter parameter, HttpRequest request, HttpResponse response) {
-        // 기존 로직...
-        
-        // MultipartFile 파라미터 처리
-        if (parameter.getType() == MultipartFile.class) {
-            if (request instanceof MultipartRequest) {
-                MultipartRequest multipartRequest = (MultipartRequest) request;
-                RequestParam requestParam = parameter.getAnnotation(RequestParam.class);
-                String paramName = getParameterName(requestParam, parameter);
-                return multipartRequest.getFile(paramName);
-            }
-        }
-        
-        // MultipartFile[] 배열 처리
-        if (parameter.getType() == MultipartFile[].class) {
-            // 여러 파일 처리 로직
-        }
-    }
+    
+    // 파일 정보 유틸리티
+    public static String formatFileSize(long bytes);
+    public static boolean isImageFile(String contentType);
+    public static boolean isTextFile(String contentType);
+    
+    // 디렉토리 및 경로 관리
+    public static void ensureDirectoryExists(String dirPath);
+    public static String createSafeFilePath(String uploadDir, String filename);
 }
 ```
 
@@ -127,13 +185,23 @@ public class FileUploadController {
         @RequestParam("description") String description
     ) {
         if (!file.isEmpty()) {
-            // 파일 저장 로직
+            // 파일 검증
+            if (!FileUploadUtil.isValidFileSize(file.getSize(), uploadConfig.getMaxFileSize())) {
+                return new ModelAndView("upload-error");
+            }
+            
+            if (!FileUploadUtil.isAllowedExtension(file.getOriginalFilename(), 
+                                                   uploadConfig.getAllowedExtensions())) {
+                return new ModelAndView("upload-error");
+            }
+            
+            // 파일 저장
             String savedPath = saveFile(file);
             
             ModelAndView mav = new ModelAndView("upload-success");
-            mav.addObject("filename", file.getOriginalFilename());
-            mav.addObject("savedPath", savedPath);
-            mav.addObject("description", description);
+            mav.addAttribute("filename", file.getOriginalFilename());
+            mav.addAttribute("savedPath", savedPath);
+            mav.addAttribute("fileSize", FileUploadUtil.formatFileSize(file.getSize()));
             return mav;
         }
         
@@ -150,114 +218,194 @@ public ModelAndView uploadMultipleFiles(
     @RequestParam("files") MultipartFile[] files,
     @RequestParam("category") String category
 ) {
-    List<String> savedFiles = new ArrayList<>();
+    List<UploadResult> results = new ArrayList<>();
+    long totalSize = 0;
     
     for (MultipartFile file : files) {
         if (!file.isEmpty()) {
+            totalSize += file.getSize();
+            
+            // 전체 요청 크기 검증
+            if (totalSize > uploadConfig.getMaxRequestSize()) {
+                // 오류 처리
+            }
+            
+            // 개별 파일 검증 및 저장
             String savedPath = saveFile(file);
-            savedFiles.add(savedPath);
+            results.add(new UploadResult(file, savedPath, true, null));
         }
     }
     
     ModelAndView mav = new ModelAndView("upload-multiple-success");
-    mav.addObject("uploadedFiles", savedFiles);
-    mav.addObject("category", category);
+    mav.addAttribute("results", results);
+    mav.addAttribute("category", category);
     return mav;
 }
 ```
 
-### 3. 파일과 폼 데이터 혼합
+### 3. 프로필 + 아바타 업로드 (파일 + 폼 데이터 혼합)
 
 ```java
 @RequestMapping(value = "/upload/profile", method = "POST")
 public ModelAndView uploadProfile(
     @ModelAttribute UserProfile profile,
-    @RequestParam("avatar") MultipartFile avatar
+    @RequestParam(value = "avatar", required = false) MultipartFile avatar
 ) {
-    // 프로필 정보 처리
-    if (!avatar.isEmpty()) {
-        // 아바타 이미지 저장
-        profile.setAvatarPath(saveFile(avatar));
+    // 프로필 정보 검증
+    if (profile.getName() == null || profile.getName().trim().isEmpty()) {
+        return new ModelAndView("upload-error");
     }
     
-    // 데이터베이스 저장 로직...
+    // 아바타 이미지 처리
+    if (avatar != null && !avatar.isEmpty()) {
+        // 이미지 파일 검증
+        if (!FileUploadUtil.isImageFile(avatar.getContentType())) {
+            return new ModelAndView("upload-error");
+        }
+        
+        // 아바타 저장
+        String avatarPath = saveFile(avatar);
+        profile.setAvatarPath(avatarPath);
+    }
     
+    // 프로필 저장
     ModelAndView mav = new ModelAndView("profile-updated");
-    mav.addObject("profile", profile);
+    mav.addAttribute("profile", profile);
+    mav.addAttribute("hasAvatar", avatar != null && !avatar.isEmpty());
+    return mav;
+}
+```
+
+### 4. 파일 정보 조회 (AJAX용)
+
+```java
+@RequestMapping(value = "/upload/info", method = "POST")
+public ModelAndView getFileInfo(@RequestParam("file") MultipartFile file) {
+    ModelAndView mav = new ModelAndView("json");
+    
+    if (file == null || file.isEmpty()) {
+        mav.addAttribute("success", false);
+        mav.addAttribute("error", "파일이 없습니다.");
+        return mav;
+    }
+    
+    // 파일 정보 수집
+    FileInfo info = new FileInfo();
+    info.setName(file.getOriginalFilename());
+    info.setSize(file.getSize());
+    info.setFormattedSize(FileUploadUtil.formatFileSize(file.getSize()));
+    info.setContentType(file.getContentType());
+    info.setIsImage(FileUploadUtil.isImageFile(file.getContentType()));
+    info.setIsSafe(FileUploadUtil.isSafeFilename(file.getOriginalFilename()));
+    
+    mav.addAttribute("success", true);
+    mav.addAttribute("fileInfo", info);
     return mav;
 }
 ```
 
 ## 🛠 기술적 특징
 
-### 1. Multipart 파싱
-- RFC 2388 Multipart 표준 구현
-- Boundary 기반 데이터 분리
-- 메모리 효율적인 스트림 처리
+### 1. 보안 중심 설계
+- **확장자 화이트리스트** 검증으로 실행 파일 업로드 차단
+- **파일명 안전성** 검사로 경로 조작 공격 방지
+- **파일 크기 제한**으로 DoS 공격 방지
+- **Content-Type 검증**으로 MIME 타입 위조 방지
 
-### 2. 파일 보안
-- 확장자 화이트리스트 검증
-- 파일 크기 제한
-- 업로드 경로 제한
+### 2. 메모리 효율성
+- **스트림 기반** 파일 처리로 대용량 파일 지원
+- **방어적 복사**로 데이터 안전성 보장
+- **자동 리소스 해제**로 메모리 누수 방지
 
-### 3. 파일명 관리
-- 고유한 파일명 생성 (UUID 기반)
-- 원본 파일명 보존
-- 경로 조작 공격 방지
+### 3. 개발자 친화적 API
+- **어노테이션 기반** 파라미터 바인딩
+- **체이닝 방식** 설정으로 직관적인 구성
+- **상세한 오류 메시지**로 디버깅 지원
+- **템플릿 기반** 응답으로 사용자 친화적 UI
 
-### 4. 메모리 관리
-- 대용량 파일 스트림 처리
-- 임시 파일 활용
-- 자동 리소스 해제
+### 4. 확장성과 호환성
+- **기존 HttpRequest 완전 호환**
+- **다양한 파라미터 타입** 지원 (단일/다중 파일, 폼 데이터 혼합)
+- **플러그인 방식** 확장으로 새로운 검증 규칙 추가 가능
 
-## 📊 구현 클래스
+## 📊 구현 클래스 상세
 
-### 새로 추가되는 클래스들
+### 새로 추가된 클래스들
 
 1. **MultipartFile** (인터페이스) - 업로드된 파일 추상화
-2. **StandardMultipartFile** (구현체) - MultipartFile 구현
-3. **MultipartRequest** (클래스) - Multipart 요청 확장
-4. **MultipartParser** (유틸) - Multipart 데이터 파싱
-5. **UploadConfig** (설정) - 업로드 관련 설정
-6. **FileUploadUtil** (유틸) - 파일 업로드 유틸리티
-7. **FileUploadController** (컨트롤러) - 테스트용 컨트롤러
+2. **StandardMultipartFile** (구현체) - 메모리 기반 MultipartFile 구현
+3. **MultipartRequest** (클래스) - HttpRequest 확장으로 파일 업로드 지원
+4. **MultipartParser** (유틸) - RFC 2388 표준 Multipart 파싱
+5. **UploadConfig** (설정) - 업로드 관련 중앙 설정 관리
+6. **FileUploadUtil** (유틸) - 파일 처리 관련 종합 유틸리티
+7. **FileUploadController** (컨트롤러) - 다양한 업로드 시나리오 테스트
 
-### 수정되는 클래스들
+### 수정된 클래스들
 
-1. **ParameterResolver** - MultipartFile 파라미터 바인딩 지원
-2. **Dispatcher** - Multipart 요청 감지 및 파싱
-3. **HttpRequest** - Multipart 지원을 위한 확장
+1. **Dispatcher** - Multipart 요청 자동 감지 및 파싱 통합
+2. **ParameterResolver** - MultipartFile/MultipartFile[] 파라미터 바인딩 지원
 
 ## 🎯 테스트 시나리오
 
-WinterMain에서 8가지 파일 업로드 시나리오를 테스트:
+FileUploadController에서 제공하는 8가지 업로드 시나리오:
 
-1. **단일 파일 업로드** - 기본 파일 업로드 테스트
-2. **다중 파일 업로드** - 여러 파일 동시 업로드
-3. **파일 + 폼 데이터** - 파일과 일반 파라미터 혼합
-4. **빈 파일 처리** - 빈 파일 업로드 시 처리
-5. **파일 크기 제한** - 크기 초과 파일 처리
-6. **확장자 제한** - 허용되지 않은 확장자 처리
-7. **프로필 업로드** - 사용자 프로필 + 아바타 업로드
-8. **파일 정보 조회** - 업로드된 파일 메타데이터 확인
+1. **단일 파일 업로드** (`/upload`)
+    - 파일 + 설명 텍스트 업로드
+    - 파일 크기, 확장자, 안전성 검증
+    - 상세한 업로드 결과 표시
 
-## 🔗 연관된 컴포넌트
+2. **다중 파일 업로드** (`/upload/multiple`)
+    - 여러 파일 동시 업로드
+    - 개별 파일별 성공/실패 결과
+    - 전체 요청 크기 제한 검증
 
-- **Dispatcher**: Multipart 요청 감지 및 파싱 통합
-- **ParameterResolver**: MultipartFile 파라미터 바인딩
-- **FileUploadController**: 테스트용 업로드 컨트롤러
-- **UploadConfig**: 업로드 설정 관리
-- **FileUploadUtil**: 파일 처리 유틸리티
+3. **프로필 + 아바타 업로드** (`/upload/profile`)
+    - 폼 데이터와 파일의 혼합 처리
+    - 이미지 파일 전용 검증
+    - 객체 바인딩과 파일 업로드 연동
+
+4. **파일 정보 조회** (`/upload/info`)
+    - AJAX 방식 파일 정보 분석
+    - JSON 응답으로 파일 메타데이터 제공
+
+5. **업로드 폼 페이지** (`/upload/form`)
+    - 다양한 업로드 시나리오 테스트 UI
+    - 현재 설정 정보 표시
+
+6. **오류 처리 검증**
+    - 파일 크기 초과
+    - 허용되지 않은 확장자
+    - 빈 파일 업로드
+    - 안전하지 않은 파일명
+
+7. **템플릿 기반 응답**
+    - `upload-success.html` - 성공 시 상세 정보
+    - `upload-error.html` - 실패 시 오류 정보 및 해결 방법
+    - `upload-multiple-success.html` - 다중 파일 업로드 결과
 
 ## 🎉 24단계 완성 효과
 
-- **파일 업로드 지원**: 웹 애플리케이션의 핵심 기능 구현
-- **보안 강화**: 파일 업로드 관련 보안 검증
-- **개발 편의성**: 어노테이션 기반 파일 처리
-- **확장성**: 다양한 파일 타입과 크기 지원
-- **안정성**: 메모리 효율적인 대용량 파일 처리
+### 개발 편의성 향상
+- **어노테이션 기반** 파일 처리로 코드 간소화
+- **자동 파라미터 바인딩**으로 보일러플레이트 코드 제거
+- **상세한 검증과 오류 메시지**로 디버깅 시간 단축
 
-24단계를 통해 Winter Framework는 실제 웹 애플리케이션에서 필수적인 파일 업로드 기능을 완전히 지원하게 되었습니다!
+### 보안 강화
+- **다층 보안 검증** (확장자, 파일명, 크기, Content-Type)
+- **경로 조작 공격 방지**로 서버 보안 강화
+- **실행 파일 차단**으로 악성코드 업로드 방지
+
+### 성능 최적화
+- **스트림 기반 처리**로 메모리 효율성 극대화
+- **파일 크기 제한**으로 서버 부하 방지
+- **고유 파일명 생성**으로 파일 충돌 방지
+
+### 확장성 확보
+- **플러그인 방식** 설정으로 다양한 요구사항 대응
+- **기존 코드 완전 호환**으로 점진적 마이그레이션 가능
+- **표준 준수**로 다른 시스템과의 연동성 확보
+
+24단계를 통해 Winter Framework는 **엔터프라이즈급 파일 업로드 시스템**을 완전히 지원하게 되었습니다! 이제 실제 프로덕션 환경에서 요구되는 모든 파일 업로드 시나리오를 안전하고 효율적으로 처리할 수 있습니다.
 
 ## 🚀 다음 단계 예고
 
