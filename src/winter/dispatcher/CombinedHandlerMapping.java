@@ -3,6 +3,7 @@ package winter.dispatcher;
 import winter.controller.FileUploadController;
 import winter.controller.ProductController;
 import winter.controller.SearchController;
+import winter.controller.SessionController;
 
 /**
  * 레거시 Controller 인터페이스와 어노테이션 기반 핸들러를 통합하여 관리하는 클래스
@@ -49,6 +50,9 @@ public class CombinedHandlerMapping {
 
             // 24단계: 파일 업로드 테스트 컨트롤러 등록
             annotationHandlerMapping.registerController(FileUploadController.class);
+
+            // 25단계: 세션 관리 테스트 컨트롤러 등록
+            annotationHandlerMapping.registerController(SessionController.class);
 
             // 추후 추가될 어노테이션 컨트롤러들을 여기에 등록
             // annotationHandlerMapping.registerController(UserApiController.class);

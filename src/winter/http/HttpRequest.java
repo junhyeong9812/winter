@@ -9,11 +9,13 @@ import java.util.*;
  *
  * 경로, 쿼리 파라미터, HTTP 메서드, 헤더, 요청 본문을 포함합니다.
  * Multipart 요청 처리를 위해 기존 구조를 확장했습니다.
+ * 25단계: 세션 관리 기능 추가
  *
  * 주요 변경사항:
  * 1. parameters를 Map<String, List<String>>으로 변경 (다중값 지원)
  * 2. 요청 본문 처리를 위한 BufferedReader 추가
  * 3. 새로운 생성자와 메서드 추가
+ * 4. 세션 접근 및 쿠키 파싱 기능 추가
  */
 public class HttpRequest {
     private final String path;
@@ -21,6 +23,10 @@ public class HttpRequest {
     private final Map<String, List<String>> parameters = new HashMap<>();
     private final Map<String, String> headers = new HashMap<>();
     private final BufferedReader body;
+
+    // 25단계: 세션 관련 필드 추가
+    private final Map<String, Cookie> cookies = new HashMap<>();
+    private HttpSession session;
 
     /**
      * 기본 생성자 (GET 요청 전용)
@@ -74,6 +80,9 @@ public class HttpRequest {
         if (parts.length > 1) {
             parseQueryString(parts[1]);
         }
+
+        // 25단계: 쿠키 파싱
+        parseCookies();
     }
 
     /**
@@ -91,6 +100,26 @@ public class HttpRequest {
                 String key = urlDecode(kv[0]);
                 String value = kv.length == 2 ? urlDecode(kv[1]) : "";
                 addParameter(key, value);
+            }
+        }
+    }
+
+    /**
+     * 25단계: 쿠키 헤더를 파싱하여 쿠키 맵에 추가
+     */
+    private void parseCookies() {
+        String cookieHeader = getHeader("Cookie");
+        if (cookieHeader == null || cookieHeader.trim().isEmpty()) {
+            return;
+        }
+
+        String[] cookiePairs = cookieHeader.split(";");
+        for (String cookiePair : cookiePairs) {
+            String[] parts = cookiePair.trim().split("=", 2);
+            if (parts.length == 2) {
+                String name = parts[0].trim();
+                String value = parts[1].trim();
+                cookies.put(name, new Cookie(name, value));
             }
         }
     }
@@ -283,6 +312,103 @@ public class HttpRequest {
         return "GET".equals(method);
     }
 
+    // ===== 25단계: 세션 관련 메서드 추가 =====
+
+    /**
+     * 현재 세션을 반환합니다. 세션이 없으면 null을 반환합니다.
+     *
+     * @return 현재 HttpSession 또는 null
+     */
+    public HttpSession getSession() {
+        return getSession(true);
+    }
+
+    /**
+     * 현재 세션을 반환합니다.
+     *
+     * @param create true이면 세션이 없을 때 새로 생성, false이면 기존 세션만 반환
+     * @return HttpSession 또는 null
+     */
+    public HttpSession getSession(boolean create) {
+        // 이미 세션이 설정되어 있으면 반환
+        if (session != null) {
+            return session;
+        }
+
+        // 외부 SessionManager에 의해 설정될 예정 (Dispatcher에서 처리)
+        // 여기서는 기본 동작만 제공
+        return null;
+    }
+
+    /**
+     * 세션을 설정합니다. (내부적으로 SessionManager가 호출)
+     *
+     * @param session 설정할 HttpSession
+     */
+    public void setSession(HttpSession session) {
+        this.session = session;
+    }
+
+    /**
+     * 요청된 세션 ID를 반환합니다.
+     *
+     * @return 쿠키에서 찾은 세션 ID 또는 null
+     */
+    public String getRequestedSessionId() {
+        Cookie sessionCookie = getCookie("JSESSIONID");
+        return sessionCookie != null ? sessionCookie.getValue() : null;
+    }
+
+    /**
+     * 요청된 세션 ID가 유효한지 확인합니다.
+     *
+     * @return 세션이 존재하고 유효하면 true
+     */
+    public boolean isRequestedSessionIdValid() {
+        return session != null && getRequestedSessionId() != null &&
+                getRequestedSessionId().equals(session.getId());
+    }
+
+    /**
+     * 쿠키를 조회합니다.
+     *
+     * @param name 쿠키 이름
+     * @return Cookie 객체 또는 null
+     */
+    public Cookie getCookie(String name) {
+        return cookies.get(name);
+    }
+
+    /**
+     * 모든 쿠키를 반환합니다.
+     *
+     * @return Cookie 배열 (없으면 빈 배열)
+     */
+    public Cookie[] getCookies() {
+        return cookies.values().toArray(new Cookie[0]);
+    }
+
+    /**
+     * 특정 이름의 쿠키 값을 반환합니다.
+     *
+     * @param name 쿠키 이름
+     * @return 쿠키 값 또는 null
+     */
+    public String getCookieValue(String name) {
+        Cookie cookie = getCookie(name);
+        return cookie != null ? cookie.getValue() : null;
+    }
+
+    /**
+     * 쿠키가 존재하는지 확인합니다.
+     *
+     * @param name 쿠키 이름
+     * @return 존재하면 true
+     */
+    public boolean hasCookie(String name) {
+        return cookies.containsKey(name);
+    }
+
     @Override
     public String toString() {
         return "HttpRequest{" +
@@ -290,6 +416,8 @@ public class HttpRequest {
                 ", path='" + path + '\'' +
                 ", parameters=" + parameters.size() + " entries" +
                 ", headers=" + headers.size() + " entries" +
+                ", cookies=" + cookies.size() + " entries" +
+                ", sessionId='" + (session != null ? session.getId() : "none") + '\'' +
                 ", contentType='" + getContentType() + '\'' +
                 '}';
     }

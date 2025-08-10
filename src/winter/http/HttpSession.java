@@ -1,4 +1,4 @@
-package winter.web.http;
+package winter.http;
 
 import java.util.Enumeration;
 

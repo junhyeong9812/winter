@@ -267,6 +267,63 @@ public class Cookie {
         return maxAge == -1; // maxAge가 -1이면 세션 쿠키
     }
 
+    // === HTTP 헤더 관련 메서드들 ===
+
+    /**
+     * HTTP Set-Cookie 헤더 문자열을 생성합니다.
+     * RFC 6265 표준에 따라 올바른 형식으로 출력됩니다.
+     *
+     * @return Set-Cookie 헤더에 사용할 문자열
+     */
+    public String toHeaderString() {
+        StringBuilder header = new StringBuilder();
+
+        // 기본 name=value 추가
+        header.append(name).append("=").append(value != null ? value : "");
+
+        // Path 속성 추가
+        if (path != null) {
+            header.append("; Path=").append(path);
+        }
+
+        // Domain 속성 추가
+        if (domain != null) {
+            header.append("; Domain=").append(domain);
+        }
+
+        // Max-Age 속성 추가 (0 이상일 때만)
+        if (maxAge >= 0) {
+            header.append("; Max-Age=").append(maxAge);
+        }
+
+        // HttpOnly 속성 추가
+        if (httpOnly) {
+            header.append("; HttpOnly");
+        }
+
+        // Secure 속성 추가
+        if (secure) {
+            header.append("; Secure");
+        }
+
+        // SameSite 속성 추가
+        if (sameSite != null) {
+            header.append("; SameSite=").append(sameSite);
+        }
+
+        return header.toString();
+    }
+
+    /**
+     * 쿠키를 HTTP 요청에 사용할 형식으로 변환합니다.
+     * Cookie 헤더에 사용되는 간단한 name=value 형식입니다.
+     *
+     * @return Cookie 헤더에 사용할 문자열
+     */
+    public String toRequestString() {
+        return name + "=" + (value != null ? value : "");
+    }
+
     // === Object 클래스 오버라이드 메서드들 ===
 
     /**
