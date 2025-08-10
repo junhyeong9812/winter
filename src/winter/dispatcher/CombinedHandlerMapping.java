@@ -1,9 +1,6 @@
 package winter.dispatcher;
 
-import winter.controller.FileUploadController;
-import winter.controller.ProductController;
-import winter.controller.SearchController;
-import winter.controller.SessionController;
+import winter.controller.*;
 
 /**
  * 레거시 Controller 인터페이스와 어노테이션 기반 핸들러를 통합하여 관리하는 클래스
@@ -54,9 +51,20 @@ public class CombinedHandlerMapping {
             // 25단계: 세션 관리 테스트 컨트롤러 등록
             annotationHandlerMapping.registerController(SessionController.class);
 
+            // 26단계: View Engine Integration 테스트 컨트롤러 등록 (새로 추가)
+            annotationHandlerMapping.registerController(ViewEngineController.class);
+
             // 추후 추가될 어노테이션 컨트롤러들을 여기에 등록
             // annotationHandlerMapping.registerController(UserApiController.class);
             // annotationHandlerMapping.registerController(OrderController.class);
+
+            System.out.println("모든 어노테이션 컨트롤러 등록 완료:");
+            System.out.println("  - ProductController (22단계)");
+            System.out.println("  - SearchController (23단계)");
+            System.out.println("  - FileUploadController (24단계)");
+            System.out.println("  - SessionController (25단계)");
+            System.out.println("  - ViewEngineController (26단계)"); // 새로 추가된 컨트롤러 로깅
+
 
         } catch (Exception e) {
             System.err.println("Failed to register annotation controllers: " + e.getMessage());

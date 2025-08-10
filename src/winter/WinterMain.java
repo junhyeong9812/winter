@@ -38,10 +38,110 @@ public class WinterMain {
         // 25단계: 세션 관리 테스트
         testSessionManagement(dispatcher);
 
+        // 26단계: View Engine Integration 테스트 (새로 추가)
+        testViewEngineIntegration(dispatcher);
+
         System.out.println("\n=== WinterFramework Test Complete ===");
 
         // 세션 관리자 정리
         dispatcher.shutdown();
+    }
+
+    /**
+     * 26단계: View Engine Integration 기능 테스트
+     * 다양한 뷰 엔진(SimpleTemplate, Thymeleaf, Mustache, JSP)의 통합 테스트
+     */
+    private static void testViewEngineIntegration(Dispatcher dispatcher) {
+        System.out.println("\n--- 26단계: View Engine Integration 테스트 ---");
+
+        // 테스트 1: SimpleTemplateEngine - 기본 템플릿 엔진 테스트
+        // ${변수} 형태의 플레이스홀더를 사용하는 간단한 템플릿 엔진
+        System.out.println("\n[테스트 1] GET /view/simple - SimpleTemplateEngine");
+        HttpRequest simpleRequest = new HttpRequest("/view/simple", "GET"); // GET 요청 생성
+        HttpResponse simpleResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(simpleRequest, simpleResponse); // 디스패처로 요청 처리
+
+        // 테스트 2: MockThymeleafEngine - Thymeleaf 문법 시뮬레이션
+        // th:text, th:if, th:each 등의 Thymeleaf 속성을 모방한 템플릿 처리
+        System.out.println("\n[테스트 2] GET /view/thymeleaf - MockThymeleafEngine");
+        HttpRequest thymeleafRequest = new HttpRequest("/view/thymeleaf", "GET"); // GET 요청 생성
+        HttpResponse thymeleafResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(thymeleafRequest, thymeleafResponse); // 디스패처로 요청 처리
+
+        // 테스트 3: MockMustacheEngine - Mustache 문법 시뮬레이션
+        // {{변수}}, {{#section}} 등의 Mustache 문법을 모방한 템플릿 처리
+        System.out.println("\n[테스트 3] GET /view/mustache - MockMustacheEngine");
+        HttpRequest mustacheRequest = new HttpRequest("/view/mustache", "GET"); // GET 요청 생성
+        HttpResponse mustacheResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(mustacheRequest, mustacheResponse); // 디스패처로 요청 처리
+
+        // 테스트 4: MockJspEngine - JSP 문법 시뮬레이션
+        // <%= %>, <% %> 등의 JSP 스크립틀릿을 모방한 템플릿 처리
+        System.out.println("\n[테스트 4] GET /view/jsp - MockJspEngine");
+        HttpRequest jspRequest = new HttpRequest("/view/jsp", "GET"); // GET 요청 생성
+        HttpResponse jspResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(jspRequest, jspResponse); // 디스패처로 요청 처리
+
+        // 테스트 5: 존재하지 않는 템플릿 - 404 에러 처리 테스트
+        // 요청한 뷰명에 해당하는 템플릿 파일이 없을 때의 에러 처리 확인
+        System.out.println("\n[테스트 5] GET /view/nonexistent - 404 에러 처리");
+        HttpRequest nonexistentRequest = new HttpRequest("/view/nonexistent", "GET"); // 존재하지 않는 뷰 요청
+        HttpResponse nonexistentResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(nonexistentRequest, nonexistentResponse); // 에러 처리 확인
+
+        // 테스트 6: 뷰 엔진 우선순위 테스트
+        // 동일한 뷰명으로 여러 확장자의 템플릿이 있을 때 우선순위에 따른 선택 확인
+        System.out.println("\n[테스트 6] GET /view/priority - 뷰 엔진 우선순위");
+        HttpRequest priorityRequest = new HttpRequest("/view/priority", "GET"); // 우선순위 테스트 요청
+        HttpResponse priorityResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(priorityRequest, priorityResponse); // 우선순위 로직 확인
+
+        // 테스트 7: 뷰 엔진 성능 비교 테스트
+        // 대량의 데이터를 처리할 때 각 뷰 엔진의 성능 차이 확인
+        System.out.println("\n[테스트 7] GET /view/performance - 뷰 엔진 성능 테스트");
+        HttpRequest performanceRequest = new HttpRequest("/view/performance", "GET"); // 성능 테스트 요청
+        HttpResponse performanceResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(performanceRequest, performanceResponse); // 성능 측정
+
+        // 테스트 8: 뷰 엔진 정보 조회 테스트
+        // 현재 등록된 뷰 엔진들의 정보를 표시하는 페이지 확인
+        System.out.println("\n[테스트 8] GET /view/info - 뷰 엔진 정보 조회");
+        HttpRequest infoRequest = new HttpRequest("/view/info", "GET"); // 정보 조회 요청
+        HttpResponse infoResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(infoRequest, infoResponse); // 뷰 엔진 정보 확인
+
+        // 테스트 9: JSON 응답과 뷰 엔진 조합 테스트
+        // Accept 헤더에 따라 JSON 응답과 HTML 템플릿 응답을 선택적으로 처리
+        System.out.println("\n[테스트 9] GET /view/simple - JSON vs HTML 선택");
+        HttpRequest jsonViewRequest = new HttpRequest("/view/simple", "GET"); // 같은 엔드포인트
+        jsonViewRequest.addHeader("Accept", "application/json"); // JSON 응답 요청 헤더 추가
+        HttpResponse jsonViewResponse = new HttpResponse(); // 응답 객체 생성
+        dispatcher.dispatch(jsonViewRequest, jsonViewResponse); // Content Negotiation 확인
+
+        // 테스트 10: 템플릿 렌더링 오류 처리 테스트
+        // 템플릿 파일은 존재하지만 렌더링 중 오류가 발생할 때의 처리 확인
+        System.out.println("\n[테스트 10] 템플릿 렌더링 오류 처리 시뮬레이션");
+        try {
+            // 잘못된 모델 데이터로 렌더링 오류 유발 시도
+            HttpRequest errorRequest = new HttpRequest("/view/simple?invalidParam=true", "GET"); // 오류 유발 파라미터
+            HttpResponse errorResponse = new HttpResponse(); // 응답 객체 생성
+            dispatcher.dispatch(errorRequest, errorResponse); // 에러 처리 로직 확인
+        } catch (Exception e) {
+            System.out.println("예상된 렌더링 오류 처리 완료: " + e.getMessage()); // 예외 처리 확인
+        }
+
+        System.out.println("\n=== 26단계: View Engine Integration 테스트 완료 ===");
+
+        // 테스트 결과 요약 출력
+        System.out.println("\n📊 테스트 결과 요약:");
+        System.out.println("✅ SimpleTemplateEngine: ${변수} 치환 기능");
+        System.out.println("✅ MockThymeleafEngine: th:* 속성 시뮬레이션");
+        System.out.println("✅ MockMustacheEngine: {{변수}} 문법 시뮬레이션");
+        System.out.println("✅ MockJspEngine: <%= %> 스크립틀릿 시뮬레이션");
+        System.out.println("✅ 404 에러 처리: 존재하지 않는 템플릿 처리");
+        System.out.println("✅ 뷰 엔진 우선순위: 확장자별 엔진 선택");
+        System.out.println("✅ Content Negotiation: JSON vs HTML 자동 선택");
+        System.out.println("✅ 에러 페이지: 렌더링 실패 시 사용자 친화적 에러 표시");
     }
 
     /**

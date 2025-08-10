@@ -9,7 +9,7 @@ import winter.session.SessionConfig;
 import winter.session.SessionManager;
 import winter.upload.MultipartParser;
 import winter.upload.MultipartRequest;
-import winter.view.ContentNegotiatingViewResolver;
+import winter.view.IntegratedViewResolver; // 26챕터 수정: ContentNegotiatingViewResolver 대신 IntegratedViewResolver 사용
 import winter.view.ModelAndView;
 import winter.view.View;
 
@@ -23,6 +23,11 @@ import java.util.List;
  * HandlerMapping을 통해 핸들러를 찾고,
  * HandlerAdapter를 통해 실행한 후,
  * ViewResolver로 뷰를 찾아 렌더링하는 프레임워크의 핵심 흐름을 담당한다.
+ *
+ * 26단계 업데이트: View Engine Integration 지원
+ * - IntegratedViewResolver를 사용하여 다양한 뷰 엔진 통합 지원
+ * - SimpleTemplate, Thymeleaf, Mustache, JSP 등 다양한 뷰 엔진 자동 선택
+ * - 템플릿 확장자에 따른 적절한 뷰 엔진 매핑
  *
  * 25단계 업데이트: 세션 관리 기능 추가
  * - SessionManager를 통한 세션 생명주기 관리
@@ -105,12 +110,12 @@ public class Dispatcher {
     /**
      * 요청을 처리하는 핵심 메서드
      *
-     * 25단계 업데이트된 처리 흐름:
+     * 26단계 업데이트된 처리 흐름:
      * 0. 세션 처리 (쿠키에서 세션 ID 추출, 세션 생성/조회) (25단계 추가)
      * 1. Multipart 요청 감지 및 파싱 (24단계)
      * 2. HandlerMapping으로 핸들러 조회 (어노테이션 우선, 레거시 대체)
      * 3. HandlerAdapter를 통해 핸들러 실행(ModelAndView반환)
-     * 4. ContentNegotiatingViewResolver로 View를 찾고, 모델을 렌더링
+     * 4. IntegratedViewResolver로 View를 찾고, 모델을 렌더링 (26단계 수정)
      * 5. 세션 쿠키 설정 (25단계 추가)
      */
     public void dispatch(HttpRequest request, HttpResponse response) {
@@ -177,15 +182,19 @@ public class Dispatcher {
 
                     System.out.println("ModelAndView 생성: " + mv.getViewName());
 
-                    // Content Negotiating ViewResolver 사용
-                    ContentNegotiatingViewResolver viewResolver = new ContentNegotiatingViewResolver();
-                    viewResolver.setCurrentRequest(request);
-                    View view = viewResolver.resolveViewName(mv.getViewName());
+                    // 26챕터 수정: IntegratedViewResolver 사용
+                    // 기존: ContentNegotiatingViewResolver viewResolver = new ContentNegotiatingViewResolver();
+                    // 변경: 다양한 뷰 엔진을 통합하여 사용할 수 있는 IntegratedViewResolver 사용
+                    IntegratedViewResolver viewResolver = new IntegratedViewResolver();
+                    viewResolver.setCurrentRequest(request); // Content Negotiation을 위해 현재 요청 설정
+                    View view = viewResolver.resolveViewName(mv.getViewName()); // 뷰명으로 적절한 뷰 해결
 
                     System.out.println("뷰 해결: " + view.getClass().getSimpleName());
 
-                    // 뷰 렌더링
-                    view.render(mv.getModel(), response);
+                    // 26챕터 수정: 뷰 렌더링 시 HttpRequest도 함께 전달
+                    // 기존: view.render(mv.getModel(), response);
+                    // 변경: 뷰 엔진에서 요청 정보를 활용할 수 있도록 request도 함께 전달
+                    view.render(mv.getModel(), request, response);
 
                     response.send();
                     System.out.println("=== 요청 처리 완료 ===");

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title}">Thymeleaf Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f4f8;
+        }
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .alert-info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .alert-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .user-list {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .user-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .stats {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .thymeleaf-features {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 th:text="${title}">제목</h1>
+        <p>🍃 MockThymeleafEngine을 사용한 템플릿 렌더링</p>
+        <p th:text="${description}">설명</p>
+    </div>
+
+    <div class="content">
+        <!-- th:if 조건부 렌더링 테스트 -->
+        <div th:if="${showDetails}" class="alert alert-info">
+            <h3>📋 상세 정보 표시</h3>
+            <p>showDetails가 true이므로 이 섹션이 표시됩니다.</p>
+        </div>
+
+        <div th:if="${isVip}" class="alert alert-warning">
+            <h3>👑 VIP 사용자</h3>
+            <p>VIP 전용 컨텐츠입니다.</p>
+        </div>
+
+        <!-- 통계 정보 -->
+        <div class="stats">
+            <h3>📊 사용자 통계</h3>
+            <p>총 사용자 수: <span th:text="${totalUsers}">0</span>명</p>
+        </div>
+
+        <!-- th:each 반복 렌더링 테스트 -->
+        <div class="user-list">
+            <h3>👥 사용자 목록 (th:each 테스트)</h3>
+            <div th:each="user : ${users}" class="user-item">
+                <h4 th:text="${user.name}">사용자명</h4>
+                <p><strong>나이:</strong> <span th:text="${user.age}">0</span>세</p>
+                <p><strong>이메일:</strong> <span th:text="${user.email}">이메일</span></p>
+                <p><strong>주소:</strong> <span th:text="${user.address.city}">도시</span></p>
+            </div>
+        </div>
+
+        <!-- Thymeleaf 기능 설명 -->
+        <div class="thymeleaf-features">
+            <h4>🔧 MockThymeleaf 엔진 특징</h4>
+            <ul>
+                <li><strong>th:text:</strong> 텍스트 내용 치환</li>
+                <li><strong>th:if:</strong> 조건부 렌더링</li>
+                <li><strong>th:each:</strong> 컬렉션 반복 처리</li>
+                <li><strong>${expression}:</strong> 표현식 평가</li>
+                <li><strong>중첩 객체:</strong> ${user.address.city} 지원</li>
+            </ul>
+            
+            <h5>📝 템플릿 처리 결과</h5>
+            <p>이 템플릿은 다음과 같이 처리되었습니다:</p>
+            <ul>
+                <li>th:text 속성들이 실제 값으로 대체됨</li>
+                <li>조건부 섹션들이 평가되어 표시/숨김 처리됨</li>
+                <li>사용자 목록이 th:each로 반복 렌더링됨</li>
+            </ul>
+        </div>
+
+        <p style="text-align: center; margin-top: 30px;">
+            <a href="/view/simple" style="margin: 0 10px;">Simple 테스트</a> |
+            <a href="/view/mustache" style="margin: 0 10px;">Mustache 테스트</a> |
+            <a href="/view/jsp" style="margin: 0 10px;">JSP 테스트</a>
+        </p>
+    </div>
+</body>
+</html>

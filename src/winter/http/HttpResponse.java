@@ -1,5 +1,7 @@
 package winter.http;
 
+import java.io.PrintWriter; // 26챕터 추가: Writer 지원을 위한 임포트
+import java.io.StringWriter; // 26챕터 추가: 메모리 기반 Writer를 위한 임포트
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +10,7 @@ import java.util.Map;
 /**
  * HTTP 응답 정보를 표현하는 클래스
  * 25단계: 쿠키 관리 및 세션 지원 기능 추가
+ * 26단계: Writer 지원 기능 추가 (뷰 엔진에서 스트림 방식 출력을 위해)
  */
 public class HttpResponse {
     private int status = 200;
@@ -16,6 +19,18 @@ public class HttpResponse {
 
     // 25단계: 쿠키 관리 기능 추가
     private final List<Cookie> cookies = new ArrayList<>();
+
+    // 26단계 추가: Writer 지원을 위한 필드들
+    private PrintWriter writer; // 뷰 엔진이 스트림 방식으로 출력할 수 있도록 하는 Writer
+    private StringWriter stringWriter; // 메모리에 문자열을 저장하는 Writer
+
+    // 26단계 수정: 생성자에서 Writer 초기화
+    public HttpResponse() {
+        // StringWriter로 메모리에 출력 내용을 저장
+        this.stringWriter = new StringWriter();
+        // PrintWriter로 편리한 출력 메서드 제공
+        this.writer = new PrintWriter(stringWriter);
+    }
 
     public void setStatus(int status) {
         this.status = status;
@@ -39,6 +54,38 @@ public class HttpResponse {
 
     public Map<String, String> getHeaders() {
         return headers;
+    }
+
+    // ===== 26단계 추가: Writer 지원 메서드들 =====
+
+    /**
+     * 26단계 추가: 응답 본문을 작성하기 위한 PrintWriter 반환
+     * 뷰 엔진에서 템플릿 렌더링 결과를 스트림 방식으로 출력할 때 사용
+     * @return PrintWriter 객체
+     */
+    public PrintWriter getWriter() {
+        return writer; // IntegratedView에서 response.getWriter()로 호출하는 메서드
+    }
+
+    /**
+     * 26단계 추가: Writer에 작성된 내용을 body 필드로 설정
+     * Writer를 통해 출력된 내용을 최종 응답 본문으로 반영
+     */
+    public void flushWriter() {
+        if (writer != null) { // Writer가 null이 아닌 경우에만 실행
+            writer.flush(); // 버퍼에 있는 내용을 StringWriter로 플러시
+            this.body = stringWriter.toString(); // StringWriter의 내용을 body로 설정
+        }
+    }
+
+    /**
+     * 26단계 추가: Writer 내용을 초기화
+     * 새로운 응답을 위해 Writer 상태를 리셋할 때 사용
+     */
+    public void resetWriter() {
+        if (stringWriter != null) { // StringWriter가 null이 아닌 경우
+            stringWriter.getBuffer().setLength(0); // StringWriter 버퍼 초기화
+        }
     }
 
     // ===== 25단계: 쿠키 관리 메서드 추가 =====
@@ -209,9 +256,10 @@ public class HttpResponse {
     }
 
     /**
-     * 응답을 출력합니다. (쿠키 헤더 포함)
+     * 26단계 수정: 응답을 출력합니다. (쿠키 헤더 포함, Writer 내용 반영)
      */
     public void send() {
+        flushWriter(); // 26챕터 추가: Writer에 작성된 내용을 body로 반영
         System.out.println(" HTTP Response ");
         System.out.println("status = " + status);
 
@@ -234,6 +282,8 @@ public class HttpResponse {
      * @return HTTP 응답 헤더 문자열
      */
     public String toHttpString() {
+        flushWriter(); // 26챕터 추가: Writer 내용을 먼저 body로 반영
+
         StringBuilder response = new StringBuilder();
 
         // 상태 라인

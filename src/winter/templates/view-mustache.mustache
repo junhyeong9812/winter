@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fdf6e3;
+        }
+        .header {
+            background: linear-gradient(135deg, #ff7b7b 0%, #667eea 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        .framework-info {
+            background: linear-gradient(45deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .features-section {
+            background: #f8f9ff;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #6c5ce7;
+        }
+        .feature-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        .user-info {
+            background: #e17055;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .numbers-list {
+            background: #00b894;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .empty-notice {
+            background: #fdcb6e;
+            color: #2d3436;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .mustache-syntax {
+            background: #2d3436;
+            color: #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="header">
+    <h1>{{title}} 🎭</h1>
+    <p>MockMustache 엔진을 사용한 템플릿 렌더링</p>
+</div>
+
+<div class="content">
+    <!-- 프레임워크 정보 (기본 변수 출력) -->
+    <div class="framework-info">
+        <h2>🚀 {{framework}}</h2>
+        <p>버전: {{version}}</p>
+    </div>
+
+    {{! 이것은 Mustache 주석입니다 - 렌더링 결과에서 제거됩니다 }}
+
+    <!-- 조건부 섹션 테스트 ({{#변수}}) -->
+    {{#hasFeatures}}
+    <div class="features-section">
+        <h3>✨ 주요 기능들</h3>
+        <p>Winter Framework의 다양한 기능들을 확인해보세요!</p>
+
+        <!-- 반복 섹션 테스트 ({{#배열}}) -->
+        {{#features}}
+        <div class="feature-item">
+            <h4>📌 {{name}}</h4>
+            <p>{{description}}</p>
+        </div>
+        {{/features}}
+    </div>
+    {{/hasFeatures}}
+
+    <!-- Inverted 섹션 테스트 ({{^변수}}) -->
+    {{^isEmpty}}
+    <div style="background: #00b894; color: white; padding: 15px; border-radius: 8px; margin: 15px 0;">
+        <p>✅ 데이터가 존재합니다! (isEmpty가 false이므로 이 섹션이 표시됩니다)</p>
+    </div>
+    {{/isEmpty}}
+
+    <!-- 현재 사용자 정보 -->
+    <div class="user-info">
+        <h3>👤 현재 사용자</h3>
+        <p><strong>이름:</strong> {{currentUser.name}}</p>
+        <p><strong>나이:</strong> {{currentUser.age}}세</p>
+        <p><strong>이메일:</strong> {{currentUser.email}}</p>
+        <p><strong>주소:</strong> {{currentUser.address.city}} ({{currentUser.address.zipcode}})</p>
+    </div>
+
+    <!-- 숫자 배열 테스트 (원시 타입 배열) -->
+    <div class="numbers-list">
+        <h3>🔢 숫자 목록 (원시 타입 배열)</h3>
+        <ul>
+            {{#numbers}}
+            <li>숫자: {{.}}</li>
+            {{/numbers}}
+        </ul>
+    </div>
+
+    <!-- 빈 배열 테스트 -->
+    {{#emptyList}}
+    <div>이 섹션은 표시되지 않습니다 (빈 배열)</div>
+    {{/emptyList}}
+
+    {{^emptyList}}
+    <div class="empty-notice">
+        📭 emptyList가 비어있으므로 이 섹션이 표시됩니다 (Inverted Section)
+    </div>
+    {{/emptyList}}
+
+    <!-- Mustache 문법 설명 -->
+    <div class="mustache-syntax">
+        <h4>🎭 Mustache 문법 예제</h4>
+        <p><strong>변수 출력:</strong> {{variable}}</p>
+        <p><strong>섹션 (조건/반복):</strong> {{#section}}...{{/section}}</p>
+        <p><strong>Inverted 섹션:</strong> {{^section}}...{{/section}}</p>
+        <p><strong>주석:</strong> {{! comment }}</p>
+        <p><strong>현재 컨텍스트:</strong> {{.}}</p>
+        <p><strong>중첩 객체:</strong> {{object.property}}</p>
+    </div>
+
+    <div style="background: #74b9ff; color: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+        <h4>🔧 MockMustache 엔진 특징</h4>
+        <ul>
+            <li><strong>Logic-less:</strong> 로직이 없는 심플한 템플릿</li>
+            <li><strong>변수 출력:</strong> {{variable}} 형태</li>
+            <li><strong>섹션:</strong> 조건부/반복 처리</li>
+            <li><strong>Inverted 섹션:</strong> 부정 조건 처리</li>
+            <li><strong>HTML 이스케이핑:</strong> 자동 HTML 문자 변환</li>
+            <li><strong>중첩 객체:</strong> {{user.address.city}} 지원</li>
+        </ul>
+    </div>
+
+    <p style="text-align: center; margin-top: 30px;">
+        <a href="/view/simple" style="margin: 0 10px;">Simple 테스트</a> |
+        <a href="/view/thymeleaf" style="margin: 0 10px;">Thymeleaf 테스트</a> |
+        <a href="/view/jsp" style="margin: 0 10px;">JSP 테스트</a>
+    </p>
+</div>
+</body>
+</html>
