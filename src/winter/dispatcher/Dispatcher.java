@@ -5,11 +5,12 @@ import winter.excption.SimpleExceptionResolver;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
 import winter.http.HttpSession;
+import winter.interceptor.*;  // 27단계 추가: 인터셉터 패키지 import
 import winter.session.SessionConfig;
 import winter.session.SessionManager;
 import winter.upload.MultipartParser;
 import winter.upload.MultipartRequest;
-import winter.view.IntegratedViewResolver; // 26챕터 수정: ContentNegotiatingViewResolver 대신 IntegratedViewResolver 사용
+import winter.view.IntegratedViewResolver;
 import winter.view.ModelAndView;
 import winter.view.View;
 
@@ -23,6 +24,12 @@ import java.util.List;
  * HandlerMapping을 통해 핸들러를 찾고,
  * HandlerAdapter를 통해 실행한 후,
  * ViewResolver로 뷰를 찾아 렌더링하는 프레임워크의 핵심 흐름을 담당한다.
+ *
+ * 27단계 업데이트: HandlerInterceptor 체인 구조 구현
+ * - InterceptorChain을 통한 인터셉터 관리
+ * - preHandle → HandlerAdapter → postHandle → ViewResolver → afterCompletion 순서
+ * - 예외 발생 시에도 afterCompletion 보장
+ * - 다양한 횡단 관심사 처리 (로깅, 인증, 성능 측정, CORS 등)
  *
  * 26단계 업데이트: View Engine Integration 지원
  * - IntegratedViewResolver를 사용하여 다양한 뷰 엔진 통합 지원
@@ -60,6 +67,9 @@ public class Dispatcher {
             new SimpleExceptionResolver()
     );
 
+    // 27단계 추가: 인터셉터 체인
+    private final InterceptorChain interceptorChain = new InterceptorChain();
+
     // 25단계: 세션 관리자 추가
     private final SessionManager sessionManager;
 
@@ -69,6 +79,7 @@ public class Dispatcher {
     /**
      * Dispatcher 생성자
      * 핸들러 등록은 CombinedHandlerMapping에 완전 위임
+     * 27단계: 기본 인터셉터들 등록 추가
      * 25단계: 세션 관리자 초기화 추가
      */
     public Dispatcher() {
@@ -82,10 +93,46 @@ public class Dispatcher {
 
         this.sessionManager = new SessionManager(sessionConfig);
 
+        // 27단계: 기본 인터셉터들 등록
+        setupDefaultInterceptors();
+
         // 등록된 핸들러 정보 출력 (디버깅용)
         handlerMapping.printRegisteredHandlers();
 
         System.out.println("SessionManager 초기화 완료: " + sessionManager);
+        System.out.println("InterceptorChain 초기화 완료: " + interceptorChain);
+    }
+
+    /**
+     * 27단계: 기본 인터셉터들을 등록합니다.
+     * 인터셉터 등록 순서가 실행 순서를 결정합니다.
+     */
+    private void setupDefaultInterceptors() {
+        // 1. CORS 인터셉터 (가장 먼저 실행되어야 함)
+        interceptorChain.addInterceptor(new CorsInterceptor());
+
+        // 2. 로깅 인터셉터 (모든 요청을 로깅)
+        interceptorChain.addInterceptor(new LoggingInterceptor());
+
+        // 3. 성능 측정 인터셉터
+        interceptorChain.addInterceptor(new PerformanceInterceptor());
+
+        // 4. 인증 인터셉터 (보안이 필요한 경우)
+        interceptorChain.addInterceptor(new AuthenticationInterceptor());
+
+        System.out.println("=== 기본 인터셉터 등록 완료 ===");
+        System.out.println("등록된 인터셉터 수: " + interceptorChain.size());
+        System.out.println("실행 순서: " + interceptorChain.toString());
+    }
+
+    /**
+     * 27단계: 외부에서 추가 인터셉터를 등록할 수 있는 메서드
+     *
+     * @param interceptor 추가할 인터셉터
+     */
+    public void addInterceptor(HandlerInterceptor interceptor) {
+        interceptorChain.addInterceptor(interceptor);
+        System.out.println("사용자 정의 인터셉터 추가: " + interceptor.getClass().getSimpleName());
     }
 
     /**
@@ -108,19 +155,34 @@ public class Dispatcher {
     }
 
     /**
+     * 인터셉터 체인을 반환합니다.
+     *
+     * @return InterceptorChain 인스턴스
+     */
+    public InterceptorChain getInterceptorChain() {
+        return interceptorChain;
+    }
+
+    /**
      * 요청을 처리하는 핵심 메서드
      *
-     * 26단계 업데이트된 처리 흐름:
+     * 27단계 업데이트된 처리 흐름:
      * 0. 세션 처리 (쿠키에서 세션 ID 추출, 세션 생성/조회) (25단계 추가)
      * 1. Multipart 요청 감지 및 파싱 (24단계)
      * 2. HandlerMapping으로 핸들러 조회 (어노테이션 우선, 레거시 대체)
-     * 3. HandlerAdapter를 통해 핸들러 실행(ModelAndView반환)
-     * 4. IntegratedViewResolver로 View를 찾고, 모델을 렌더링 (26단계 수정)
-     * 5. 세션 쿠키 설정 (25단계 추가)
+     * 3. 인터셉터 체인의 preHandle 실행 (27단계 추가)
+     * 4. HandlerAdapter를 통해 핸들러 실행(ModelAndView반환)
+     * 5. 인터셉터 체인의 postHandle 실행 (27단계 추가)
+     * 6. IntegratedViewResolver로 View를 찾고, 모델을 렌더링 (26단계 수정)
+     * 7. 인터셉터 체인의 afterCompletion 실행 (27단계 추가)
+     * 8. 세션 쿠키 설정 (25단계 추가)
      */
     public void dispatch(HttpRequest request, HttpResponse response) {
+        Object handler = null;
+        Exception dispatchException = null;
+
         try {
-            System.out.println("\n=== 요청 처리 시작 ===");
+            System.out.println("\n=== 27단계: 인터셉터 체인 요청 처리 시작 ===");
             System.out.println("Method: " + request.getMethod());
             System.out.println("Path: " + request.getPath());
             System.out.println("Content-Type: " + request.getHeader("Content-Type"));
@@ -153,7 +215,7 @@ public class Dispatcher {
             }
 
             // 3. 핸들러 매핑 (어노테이션 우선, 레거시 대체)
-            Object handler = handlerMapping.getHandler(requestPath, requestMethod);
+            handler = handlerMapping.getHandler(requestPath, requestMethod);
 
             if (handler == null) {
                 System.out.println("핸들러를 찾을 수 없음: " + requestPath);
@@ -165,51 +227,51 @@ public class Dispatcher {
 
             System.out.println("핸들러 발견: " + handler.getClass().getSimpleName());
 
-            // 4. 적절한 HandlerAdapter 찾기 및 실행
+            // 4. 27단계: 인터셉터 체인의 preHandle 실행
+            if (!interceptorChain.applyPreHandle(request, response, handler)) {
+                System.out.println("인터셉터 preHandle에서 요청 처리 중단됨");
+                response.send();
+                return;
+            }
+
+            // 5. 적절한 HandlerAdapter 찾기 및 실행
+            ModelAndView mv = null;
             for (HandlerAdapter adapter : handlerAdapters) {
                 if (adapter.supports(handler)) {
                     System.out.println("사용할 어댑터: " + adapter.getClass().getSimpleName());
 
                     // 핸들러 실행
-                    ModelAndView mv = adapter.handle(handler, request, response);
-
-                    // null 대응
-                    if (mv == null) {
-                        System.out.println("ModelAndView가 null - 직접 응답 처리됨");
-                        response.send();
-                        return;
-                    }
-
-                    System.out.println("ModelAndView 생성: " + mv.getViewName());
-
-                    // 26챕터 수정: IntegratedViewResolver 사용
-                    // 기존: ContentNegotiatingViewResolver viewResolver = new ContentNegotiatingViewResolver();
-                    // 변경: 다양한 뷰 엔진을 통합하여 사용할 수 있는 IntegratedViewResolver 사용
-                    IntegratedViewResolver viewResolver = new IntegratedViewResolver();
-                    viewResolver.setCurrentRequest(request); // Content Negotiation을 위해 현재 요청 설정
-                    View view = viewResolver.resolveViewName(mv.getViewName()); // 뷰명으로 적절한 뷰 해결
-
-                    System.out.println("뷰 해결: " + view.getClass().getSimpleName());
-
-                    // 26챕터 수정: 뷰 렌더링 시 HttpRequest도 함께 전달
-                    // 기존: view.render(mv.getModel(), response);
-                    // 변경: 뷰 엔진에서 요청 정보를 활용할 수 있도록 request도 함께 전달
-                    view.render(mv.getModel(), request, response);
-
-                    response.send();
-                    System.out.println("=== 요청 처리 완료 ===");
-                    return;
+                    mv = adapter.handle(handler, request, response);
+                    break;
                 }
             }
 
-            // 적절한 어댑터를 찾지 못한 경우
-            System.err.println("적절한 어댑터를 찾을 수 없음: " + handler.getClass().getName());
-            response.setStatus(500);
-            response.setBody("500 Internal Error: No suitable adapter found for handler type: " +
-                    handler.getClass().getName());
+            // 6. 27단계: 인터셉터 체인의 postHandle 실행
+            interceptorChain.applyPostHandle(request, response, handler, mv);
+
+            // 7. 뷰 처리 (ModelAndView가 있는 경우)
+            if (mv != null) {
+                System.out.println("ModelAndView 생성: " + mv.getViewName());
+
+                // 26챕터 수정: IntegratedViewResolver 사용
+                IntegratedViewResolver viewResolver = new IntegratedViewResolver();
+                viewResolver.setCurrentRequest(request);
+                View view = viewResolver.resolveViewName(mv.getViewName());
+
+                System.out.println("뷰 해결: " + view.getClass().getSimpleName());
+
+                // 26챕터 수정: 뷰 렌더링 시 HttpRequest도 함께 전달
+                view.render(mv.getModel(), request, response);
+            } else {
+                System.out.println("ModelAndView가 null - 직접 응답 처리됨");
+            }
+
             response.send();
+            System.out.println("=== 27단계: 인터셉터 체인 요청 처리 완료 ===");
 
         } catch (Exception e) {
+            dispatchException = e;
+
             // 예외 처리에서 Multipart 관련 오류도 처리
             System.err.println("요청 처리 중 오류 발생: " + e.getMessage());
             if (e.getMessage() != null &&
@@ -230,10 +292,19 @@ public class Dispatcher {
             response.setBody("Internal Server Error: " + e.getMessage());
             response.send();
 
-            // 디버깅을 위한 상세 에러 출력 (기존 방식 유지)
+            // 디버깅을 위한 상세 에러 출력
             System.err.println("Handler execution failed: " + e.getMessage());
             e.printStackTrace();
-            throw new RuntimeException("Unhandled Exception", e);
+
+        } finally {
+            // 8. 27단계: 인터셉터 체인의 afterCompletion 실행 (finally 블록에서 반드시 실행)
+            try {
+                interceptorChain.triggerAfterCompletion(request, response, handler, dispatchException);
+            } catch (Exception afterException) {
+                // afterCompletion에서 발생한 예외는 로깅만 하고 전파하지 않음
+                System.err.println("afterCompletion 실행 중 예외 발생: " + afterException.getMessage());
+                afterException.printStackTrace();
+            }
         }
     }
 
@@ -356,6 +427,12 @@ public class Dispatcher {
         if (sessionManager != null) {
             sessionManager.shutdown();
             System.out.println("SessionManager 종료 완료");
+        }
+
+        // 27단계: 인터셉터 체인 정리
+        if (interceptorChain != null) {
+            interceptorChain.clear();
+            System.out.println("InterceptorChain 정리 완료");
         }
     }
 }

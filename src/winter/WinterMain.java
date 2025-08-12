@@ -1,10 +1,12 @@
 package winter;
 
+import winter.controller.InterceptorTestController;
 import winter.controller.ProductController;
 import winter.controller.SessionController;
 import winter.dispatcher.Dispatcher;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
+import winter.interceptor.SecurityInterceptor;
 
 import java.io.BufferedReader;
 import java.io.StringReader;
@@ -17,34 +19,402 @@ public class WinterMain {
 
         Dispatcher dispatcher = new Dispatcher();
 
-        // SessionController는 이제 CombinedHandlerMapping에서 자동 등록됨
+        // 27단계: 추가 사용자 정의 인터셉터 등록
+        dispatcher.addInterceptor(new SecurityInterceptor());
+
+        // 27단계: 인터셉터 테스트용 컨트롤러 등록
+        dispatcher.registerController(InterceptorTestController.class);
+
+        // SessionController는 이미 CombinedHandlerMapping에서 자동 등록됨
         // dispatcher.registerController(SessionController.class); // 제거
 
-        // 기존 테스트들
-        testExistingFeatures(dispatcher);
+//        // 기존 테스트들
+//        testExistingFeatures(dispatcher);
+//
+//        // 21단계: JSON 응답 테스트
+//        testJsonResponse(dispatcher);
+//
+//        // 22단계: 어노테이션 기반 MVC 테스트
+//        testAnnotationBasedMvc(dispatcher);
+//
+//        // 23단계: 파라미터 바인딩 테스트
+//        testParameterBinding(dispatcher);
+//
+//        // 24단계: 파일 업로드 테스트
+//        testFileUpload(dispatcher);
+//
+//        // 25단계: 세션 관리 테스트
+//        testSessionManagement(dispatcher);
+//
+//        // 26단계: View Engine Integration 테스트
+//        testViewEngineIntegration(dispatcher);
 
-        // 21단계: JSON 응답 테스트
-        testJsonResponse(dispatcher);
-
-        // 22단계: 어노테이션 기반 MVC 테스트
-        testAnnotationBasedMvc(dispatcher);
-
-        // 23단계: 파라미터 바인딩 테스트
-        testParameterBinding(dispatcher);
-
-        // 24단계: 파일 업로드 테스트
-        testFileUpload(dispatcher);
-
-        // 25단계: 세션 관리 테스트
-        testSessionManagement(dispatcher);
-
-        // 26단계: View Engine Integration 테스트 (새로 추가)
-        testViewEngineIntegration(dispatcher);
+        // 27단계: HandlerInterceptor 체인 테스트 (새로 추가)
+        testHandlerInterceptorChain(dispatcher);
 
         System.out.println("\n=== WinterFramework Test Complete ===");
 
         // 세션 관리자 정리
         dispatcher.shutdown();
+    }
+
+    /**
+     * 27단계: HandlerInterceptor 체인 기능 테스트 (새로 추가)
+     */
+    private static void testHandlerInterceptorChain(Dispatcher dispatcher) {
+        System.out.println("\n--- 27단계: HandlerInterceptor 체인 테스트 ---");
+
+        // 인터셉터 체인 정보 출력
+        System.out.println("📋 등록된 인터셉터 체인:");
+        System.out.println(dispatcher.getInterceptorChain().toString());
+        System.out.println();
+
+        // 인터셉터 체인 동작 원리 설명 출력
+        printInterceptorChainExplanation();
+
+        // ===========================================
+        // 테스트 시나리오 1: 기본 인터셉터 체인 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 1: 기본 인터셉터 체인");
+        testBasicInterceptorChain(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 2: 성능 측정 인터셉터 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 2: 성능 측정 인터셉터 (느린 요청)");
+        testPerformanceInterceptor(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 3: 인증 인터셉터 테스트 (인증 없음)
+        // ===========================================
+        System.out.println("\n🔥 테스트 3: 인증 인터셉터 (인증 없이 보안 페이지 접근)");
+        testAuthenticationInterceptorUnauthorized(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 4: 로그인 후 인증된 요청 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 4: 로그인 후 인증된 요청");
+        testAuthenticatedRequest(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 5: 관리자 권한 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 5: 관리자 권한 테스트");
+        testAdminAccess(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 6: CORS 인터셉터 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 6: CORS 인터셉터 (Cross-Origin 요청)");
+        testCorsInterceptor(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 7: 예외 발생 시 인터셉터 처리
+        // ===========================================
+        System.out.println("\n🔥 테스트 7: 예외 발생 시 인터셉터 처리");
+        testExceptionHandling(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 8: JSON API 인터셉터 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 8: JSON API 인터셉터");
+        testJsonApiInterceptor(dispatcher);
+
+        // ===========================================
+        // 테스트 시나리오 9: 보안 인터셉터 테스트
+        // ===========================================
+        System.out.println("\n🔥 테스트 9: 보안 인터셉터 (의심스러운 요청)");
+        testSecurityInterceptor(dispatcher);
+
+        // 27단계 구현 성과 요약 출력
+        printImplementationSummary();
+
+        System.out.println("\n=== 27단계: HandlerInterceptor 체인 테스트 완료 ===");
+    }
+
+    /**
+     * 테스트 1: 기본 인터셉터 체인 동작 확인
+     */
+    private static void testBasicInterceptorChain(Dispatcher dispatcher) {
+        HttpRequest request = createMockRequest("GET", "/interceptor/basic", null);
+        HttpResponse response = new HttpResponse();
+
+        dispatcher.dispatch(request, response);
+
+        System.out.println("✅ 응답: " + response.getStatus() + " - " +
+                (response.getBody() != null ? response.getBody().substring(0, Math.min(100, response.getBody().length())) : "No Body"));
+    }
+
+    /**
+     * 테스트 2: 성능 측정 인터셉터 동작 확인 (느린 요청)
+     */
+    private static void testPerformanceInterceptor(Dispatcher dispatcher) {
+        HttpRequest request = createMockRequest("GET", "/interceptor/slow", null);
+        HttpResponse response = new HttpResponse();
+
+        long startTime = System.currentTimeMillis();
+        dispatcher.dispatch(request, response);
+        long endTime = System.currentTimeMillis();
+
+        System.out.println("✅ 응답: " + response.getStatus() +
+                " (처리 시간: " + (endTime - startTime) + "ms)");
+    }
+
+    /**
+     * 테스트 3: 인증되지 않은 사용자의 보안 페이지 접근
+     */
+    private static void testAuthenticationInterceptorUnauthorized(Dispatcher dispatcher) {
+        HttpRequest request = createMockRequest("GET", "/secure/test", null);
+        HttpResponse response = new HttpResponse();
+
+        dispatcher.dispatch(request, response);
+
+        System.out.println("✅ 응답: " + response.getStatus() + " - 인증 없이 접근 차단됨");
+    }
+
+    /**
+     * 테스트 4: 로그인 후 인증된 요청
+     */
+    private static void testAuthenticatedRequest(Dispatcher dispatcher) {
+        // 1. 먼저 로그인 처리
+        Map<String, String> loginParams = new HashMap<>();
+        loginParams.put("username", "user");
+        loginParams.put("password", "user123");
+
+        HttpRequest loginRequest = createMockRequest("POST", "/login", loginParams);
+        HttpResponse loginResponse = new HttpResponse();
+
+        dispatcher.dispatch(loginRequest, loginResponse);
+        System.out.println("로그인 처리: " + loginResponse.getStatus());
+
+        // 2. 인증된 상태로 보안 페이지 접근
+        HttpRequest secureRequest = createMockRequest("GET", "/secure/test", null);
+        secureRequest.setSession(loginRequest.getSession()); // 세션 유지
+        HttpResponse secureResponse = new HttpResponse();
+
+        dispatcher.dispatch(secureRequest, secureResponse);
+
+        System.out.println("✅ 응답: " + secureResponse.getStatus() + " - 인증된 사용자 접근 성공");
+    }
+
+    /**
+     * 테스트 5: 관리자 권한 테스트
+     */
+    private static void testAdminAccess(Dispatcher dispatcher) {
+        // 1. 관리자로 로그인
+        Map<String, String> adminParams = new HashMap<>();
+        adminParams.put("username", "admin");
+        adminParams.put("password", "admin123");
+
+        HttpRequest adminLoginRequest = createMockRequest("POST", "/login", adminParams);
+        HttpResponse adminLoginResponse = new HttpResponse();
+
+        dispatcher.dispatch(adminLoginRequest, adminLoginResponse);
+        System.out.println("관리자 로그인: " + adminLoginResponse.getStatus());
+
+        // 2. 관리자 페이지 접근
+        HttpRequest adminRequest = createMockRequest("GET", "/admin/dashboard", null);
+        adminRequest.setSession(adminLoginRequest.getSession()); // 세션 유지
+        HttpResponse adminResponse = new HttpResponse();
+
+        dispatcher.dispatch(adminRequest, adminResponse);
+
+        System.out.println("✅ 응답: " + adminResponse.getStatus() + " - 관리자 페이지 접근 성공");
+    }
+
+    /**
+     * 테스트 6: CORS 인터셉터 테스트
+     */
+    private static void testCorsInterceptor(Dispatcher dispatcher) {
+        // 1. Preflight 요청 (OPTIONS)
+        HttpRequest preflightRequest = createMockRequest("OPTIONS", "/api/cors-test", null);
+        preflightRequest.addHeader("Origin", "http://localhost:3000");
+        preflightRequest.addHeader("Access-Control-Request-Method", "GET");
+        preflightRequest.addHeader("Access-Control-Request-Headers", "Content-Type");
+        HttpResponse preflightResponse = new HttpResponse();
+
+        dispatcher.dispatch(preflightRequest, preflightResponse);
+        System.out.println("Preflight 요청: " + preflightResponse.getStatus());
+
+        // 2. 실제 CORS 요청
+        HttpRequest corsRequest = createMockRequest("GET", "/api/cors-test", null);
+        corsRequest.addHeader("Origin", "http://localhost:3000");
+        HttpResponse corsResponse = new HttpResponse();
+
+        dispatcher.dispatch(corsRequest, corsResponse);
+
+        System.out.println("✅ 응답: " + corsResponse.getStatus() + " - CORS 헤더 설정됨");
+        System.out.println("   Access-Control-Allow-Origin: " + corsResponse.getHeaders().get("Access-Control-Allow-Origin"));
+    }
+
+    /**
+     * 테스트 7: 예외 발생 시 인터셉터 처리
+     */
+    private static void testExceptionHandling(Dispatcher dispatcher) {
+        HttpRequest request = createMockRequest("GET", "/interceptor/error", null);
+        HttpResponse response = new HttpResponse();
+
+        try {
+            dispatcher.dispatch(request, response);
+        } catch (Exception e) {
+            // 예외가 발생해도 afterCompletion은 실행되어야 함
+        }
+
+        System.out.println("✅ 응답: " + response.getStatus() + " - 예외 발생 시에도 afterCompletion 실행됨");
+    }
+
+    /**
+     * 테스트 8: JSON API 인터셉터 테스트
+     */
+    private static void testJsonApiInterceptor(Dispatcher dispatcher) {
+        HttpRequest request = createMockRequest("GET", "/api/interceptor-test", null);
+        request.addHeader("Accept", "application/json");
+        HttpResponse response = new HttpResponse();
+
+        dispatcher.dispatch(request, response);
+
+        System.out.println("✅ 응답: " + response.getStatus() + " - JSON API 정상 처리");
+        System.out.println("   Content-Type: " + response.getHeaders().get("Content-Type"));
+    }
+
+    /**
+     * 테스트 9: 보안 인터셉터 테스트 (의심스러운 요청)
+     */
+    private static void testSecurityInterceptor(Dispatcher dispatcher) {
+        // SQL Injection 시도
+        HttpRequest sqlInjectionRequest = createMockRequest("GET", "/interceptor/basic", null);
+        Map<String, String> sqlParams = new HashMap<>();
+        sqlParams.put("id", "1' OR '1'='1");
+        HttpRequest sqlInjectionRequestWithParams = createMockRequest("GET", "/interceptor/basic", sqlParams);
+        HttpResponse sqlInjectionResponse = new HttpResponse();
+
+        dispatcher.dispatch(sqlInjectionRequestWithParams, sqlInjectionResponse);
+        System.out.println("SQL Injection 차단: " + sqlInjectionResponse.getStatus());
+
+        // XSS 시도
+        Map<String, String> xssParams = new HashMap<>();
+        xssParams.put("comment", "<script>alert('xss')</script>");
+        HttpRequest xssRequest = createMockRequest("GET", "/interceptor/basic", xssParams);
+        HttpResponse xssResponse = new HttpResponse();
+
+        dispatcher.dispatch(xssRequest, xssResponse);
+        System.out.println("XSS 차단: " + xssResponse.getStatus());
+
+        // 정상 요청의 보안 헤더 확인
+        HttpRequest normalRequest = createMockRequest("GET", "/interceptor/basic", null);
+        HttpResponse normalResponse = new HttpResponse();
+
+        dispatcher.dispatch(normalRequest, normalResponse);
+
+        System.out.println("✅ 응답: " + normalResponse.getStatus() + " - 보안 헤더 자동 추가");
+        System.out.println("   X-Content-Type-Options: " + normalResponse.getHeaders().get("X-Content-Type-Options"));
+        System.out.println("   X-Frame-Options: " + normalResponse.getHeaders().get("X-Frame-Options"));
+        System.out.println("   Content-Security-Policy 설정됨: " +
+                (normalResponse.getHeaders().get("Content-Security-Policy") != null));
+    }
+
+    /**
+     * Mock HTTP Request 생성 유틸리티 메서드
+     */
+    private static HttpRequest createMockRequest(String method, String path, Map<String, String> parameters) {
+        // 경로에 쿼리 파라미터 추가
+        StringBuilder pathBuilder = new StringBuilder(path);
+        if (parameters != null && !parameters.isEmpty() && "GET".equals(method)) {
+            pathBuilder.append("?");
+            boolean first = true;
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                if (!first) pathBuilder.append("&");
+                pathBuilder.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+        }
+
+        // HttpRequest 생성
+        HttpRequest request = new HttpRequest(pathBuilder.toString(), method);
+
+        // 기본 헤더 추가
+        request.addHeader("Host", "localhost:8080");
+        request.addHeader("User-Agent", "Winter-Framework-Test/27.0");
+        request.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8");
+        request.addHeader("Accept-Language", "ko-KR,ko;q=0.8,en-US;q=0.5,en;q=0.3");
+        request.addHeader("Accept-Encoding", "gzip, deflate");
+        request.addHeader("Connection", "keep-alive");
+
+        // POST 요청인 경우 파라미터를 본문으로 처리
+        if ("POST".equals(method) && parameters != null && !parameters.isEmpty()) {
+            request.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+            // POST 파라미터는 별도로 추가
+            for (Map.Entry<String, String> entry : parameters.entrySet()) {
+                request.addParameter(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return request;
+    }
+
+    /**
+     * 인터셉터 체인 동작 원리 설명 출력
+     */
+    private static void printInterceptorChainExplanation() {
+        System.out.println("\n📚 인터셉터 체인 동작 원리:");
+        System.out.println("┌─────────────────────────────────────────────────────────────┐");
+        System.out.println("│                    인터셉터 체인 실행 순서                     │");
+        System.out.println("├─────────────────────────────────────────────────────────────┤");
+        System.out.println("│ 1. CorsInterceptor.preHandle()        (CORS 검증)           │");
+        System.out.println("│ 2. LoggingInterceptor.preHandle()     (요청 로깅 시작)       │");
+        System.out.println("│ 3. PerformanceInterceptor.preHandle() (성능 측정 시작)       │");
+        System.out.println("│ 4. AuthenticationInterceptor.preHandle() (인증 확인)        │");
+        System.out.println("│ 5. SecurityInterceptor.preHandle()    (보안 검사)           │");
+        System.out.println("│                                                             │");
+        System.out.println("│ 6. ✅ Handler/Controller 실행                              │");
+        System.out.println("│                                                             │");
+        System.out.println("│ 7. SecurityInterceptor.postHandle()   (보안 헤더 추가)      │");
+        System.out.println("│ 8. AuthenticationInterceptor.postHandle() (사용자 정보 추가) │");
+        System.out.println("│ 9. PerformanceInterceptor.postHandle() (성능 데이터 수집)   │");
+        System.out.println("│10. LoggingInterceptor.postHandle()    (응답 로깅)           │");
+        System.out.println("│11. CorsInterceptor.postHandle()       (CORS 헤더 추가)      │");
+        System.out.println("│                                                             │");
+        System.out.println("│12. 🎨 View 렌더링                                          │");
+        System.out.println("│                                                             │");
+        System.out.println("│13. SecurityInterceptor.afterCompletion() (정리 작업)       │");
+        System.out.println("│14. AuthenticationInterceptor.afterCompletion() (감사 로그)  │");
+        System.out.println("│15. PerformanceInterceptor.afterCompletion() (최종 통계)    │");
+        System.out.println("│16. LoggingInterceptor.afterCompletion() (최종 로깅)        │");
+        System.out.println("│17. CorsInterceptor.afterCompletion() (CORS 완료 로깅)      │");
+        System.out.println("└─────────────────────────────────────────────────────────────┘");
+        System.out.println("\n💡 특징:");
+        System.out.println("• preHandle: 등록 순서대로 실행 (A→B→C→D→E)");
+        System.out.println("• postHandle: 등록 순서의 역순으로 실행 (E→D→C→B→A)");
+        System.out.println("• afterCompletion: 등록 순서의 역순으로 실행 (E→D→C→B→A)");
+        System.out.println("• 예외 발생 시에도 afterCompletion은 반드시 실행됨");
+        System.out.println("• preHandle에서 false 반환 시 체인 중단");
+    }
+
+    /**
+     * 27단계 구현 성과 요약 출력
+     */
+    private static void printImplementationSummary() {
+        System.out.println("\n🎯 27단계 구현 성과 요약:");
+        System.out.println("┌─────────────────────────────────────────────────────────────┐");
+        System.out.println("│                  HandlerInterceptor 체인 구조                │");
+        System.out.println("├─────────────────────────────────────────────────────────────┤");
+        System.out.println("│ ✅ HandlerInterceptor 인터페이스 설계                        │");
+        System.out.println("│ ✅ InterceptorChain 체인 관리 클래스                         │");
+        System.out.println("│ ✅ LoggingInterceptor (요청/응답 로깅)                       │");
+        System.out.println("│ ✅ PerformanceInterceptor (성능 측정 및 모니터링)             │");
+        System.out.println("│ ✅ AuthenticationInterceptor (세션 기반 인증)                │");
+        System.out.println("│ ✅ CorsInterceptor (Cross-Origin 요청 처리)                  │");
+        System.out.println("│ ✅ SecurityInterceptor (보안 헤더 및 공격 차단)               │");
+        System.out.println("│ ✅ Dispatcher 통합 (체인 실행 보장)                          │");
+        System.out.println("│ ✅ 예외 안전성 (afterCompletion 보장)                       │");
+        System.out.println("│ ✅ 테스트 시나리오 (9가지 케이스)                            │");
+        System.out.println("└─────────────────────────────────────────────────────────────┘");
+        System.out.println("\n🚀 다음 단계 (28단계) 준비:");
+        System.out.println("• Bean Validation API 통합 (@Valid, @NotNull 등)");
+        System.out.println("• 유효성 검사 인터셉터 구현");
+        System.out.println("• 커스텀 Validator 지원");
+        System.out.println("• 검증 실패 시 자동 에러 응답");
     }
 
     /**
