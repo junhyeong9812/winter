@@ -6,6 +6,7 @@ import winter.controller.SessionController;
 import winter.dispatcher.Dispatcher;
 import winter.http.HttpRequest;
 import winter.http.HttpResponse;
+import winter.http.StandardHttpResponse;
 import winter.interceptor.SecurityInterceptor;
 
 import java.io.BufferedReader;
@@ -137,7 +138,8 @@ public class WinterMain {
      */
     private static void testBasicInterceptorChain(Dispatcher dispatcher) {
         HttpRequest request = createMockRequest("GET", "/interceptor/basic", null);
-        HttpResponse response = new HttpResponse();
+        HttpResponse response = new StandardHttpResponse() {
+        };
 
         dispatcher.dispatch(request, response);
 
@@ -150,7 +152,7 @@ public class WinterMain {
      */
     private static void testPerformanceInterceptor(Dispatcher dispatcher) {
         HttpRequest request = createMockRequest("GET", "/interceptor/slow", null);
-        HttpResponse response = new HttpResponse();
+        HttpResponse response = new StandardHttpResponse();
 
         long startTime = System.currentTimeMillis();
         dispatcher.dispatch(request, response);
@@ -165,7 +167,7 @@ public class WinterMain {
      */
     private static void testAuthenticationInterceptorUnauthorized(Dispatcher dispatcher) {
         HttpRequest request = createMockRequest("GET", "/secure/test", null);
-        HttpResponse response = new HttpResponse();
+        HttpResponse response = new StandardHttpResponse();
 
         dispatcher.dispatch(request, response);
 
@@ -182,7 +184,7 @@ public class WinterMain {
         loginParams.put("password", "user123");
 
         HttpRequest loginRequest = createMockRequest("POST", "/login", loginParams);
-        HttpResponse loginResponse = new HttpResponse();
+        HttpResponse loginResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(loginRequest, loginResponse);
         System.out.println("로그인 처리: " + loginResponse.getStatus());
@@ -190,7 +192,7 @@ public class WinterMain {
         // 2. 인증된 상태로 보안 페이지 접근
         HttpRequest secureRequest = createMockRequest("GET", "/secure/test", null);
         secureRequest.setSession(loginRequest.getSession()); // 세션 유지
-        HttpResponse secureResponse = new HttpResponse();
+        HttpResponse secureResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(secureRequest, secureResponse);
 
@@ -207,7 +209,7 @@ public class WinterMain {
         adminParams.put("password", "admin123");
 
         HttpRequest adminLoginRequest = createMockRequest("POST", "/login", adminParams);
-        HttpResponse adminLoginResponse = new HttpResponse();
+        HttpResponse adminLoginResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(adminLoginRequest, adminLoginResponse);
         System.out.println("관리자 로그인: " + adminLoginResponse.getStatus());
@@ -215,7 +217,7 @@ public class WinterMain {
         // 2. 관리자 페이지 접근
         HttpRequest adminRequest = createMockRequest("GET", "/admin/dashboard", null);
         adminRequest.setSession(adminLoginRequest.getSession()); // 세션 유지
-        HttpResponse adminResponse = new HttpResponse();
+        HttpResponse adminResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(adminRequest, adminResponse);
 
@@ -231,7 +233,7 @@ public class WinterMain {
         preflightRequest.addHeader("Origin", "http://localhost:3000");
         preflightRequest.addHeader("Access-Control-Request-Method", "GET");
         preflightRequest.addHeader("Access-Control-Request-Headers", "Content-Type");
-        HttpResponse preflightResponse = new HttpResponse();
+        HttpResponse preflightResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(preflightRequest, preflightResponse);
         System.out.println("Preflight 요청: " + preflightResponse.getStatus());
@@ -239,7 +241,7 @@ public class WinterMain {
         // 2. 실제 CORS 요청
         HttpRequest corsRequest = createMockRequest("GET", "/api/cors-test", null);
         corsRequest.addHeader("Origin", "http://localhost:3000");
-        HttpResponse corsResponse = new HttpResponse();
+        HttpResponse corsResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(corsRequest, corsResponse);
 
@@ -252,7 +254,7 @@ public class WinterMain {
      */
     private static void testExceptionHandling(Dispatcher dispatcher) {
         HttpRequest request = createMockRequest("GET", "/interceptor/error", null);
-        HttpResponse response = new HttpResponse();
+        HttpResponse response = new StandardHttpResponse();
 
         try {
             dispatcher.dispatch(request, response);
@@ -269,7 +271,7 @@ public class WinterMain {
     private static void testJsonApiInterceptor(Dispatcher dispatcher) {
         HttpRequest request = createMockRequest("GET", "/api/interceptor-test", null);
         request.addHeader("Accept", "application/json");
-        HttpResponse response = new HttpResponse();
+        HttpResponse response = new StandardHttpResponse();
 
         dispatcher.dispatch(request, response);
 
@@ -286,7 +288,7 @@ public class WinterMain {
         Map<String, String> sqlParams = new HashMap<>();
         sqlParams.put("id", "1' OR '1'='1");
         HttpRequest sqlInjectionRequestWithParams = createMockRequest("GET", "/interceptor/basic", sqlParams);
-        HttpResponse sqlInjectionResponse = new HttpResponse();
+        HttpResponse sqlInjectionResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(sqlInjectionRequestWithParams, sqlInjectionResponse);
         System.out.println("SQL Injection 차단: " + sqlInjectionResponse.getStatus());
@@ -295,14 +297,14 @@ public class WinterMain {
         Map<String, String> xssParams = new HashMap<>();
         xssParams.put("comment", "<script>alert('xss')</script>");
         HttpRequest xssRequest = createMockRequest("GET", "/interceptor/basic", xssParams);
-        HttpResponse xssResponse = new HttpResponse();
+        HttpResponse xssResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(xssRequest, xssResponse);
         System.out.println("XSS 차단: " + xssResponse.getStatus());
 
         // 정상 요청의 보안 헤더 확인
         HttpRequest normalRequest = createMockRequest("GET", "/interceptor/basic", null);
-        HttpResponse normalResponse = new HttpResponse();
+        HttpResponse normalResponse = new StandardHttpResponse();
 
         dispatcher.dispatch(normalRequest, normalResponse);
 
@@ -428,56 +430,56 @@ public class WinterMain {
         // ${변수} 형태의 플레이스홀더를 사용하는 간단한 템플릿 엔진
         System.out.println("\n[테스트 1] GET /view/simple - SimpleTemplateEngine");
         HttpRequest simpleRequest = new HttpRequest("/view/simple", "GET"); // GET 요청 생성
-        HttpResponse simpleResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse simpleResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(simpleRequest, simpleResponse); // 디스패처로 요청 처리
 
         // 테스트 2: MockThymeleafEngine - Thymeleaf 문법 시뮬레이션
         // th:text, th:if, th:each 등의 Thymeleaf 속성을 모방한 템플릿 처리
         System.out.println("\n[테스트 2] GET /view/thymeleaf - MockThymeleafEngine");
         HttpRequest thymeleafRequest = new HttpRequest("/view/thymeleaf", "GET"); // GET 요청 생성
-        HttpResponse thymeleafResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse thymeleafResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(thymeleafRequest, thymeleafResponse); // 디스패처로 요청 처리
 
         // 테스트 3: MockMustacheEngine - Mustache 문법 시뮬레이션
         // {{변수}}, {{#section}} 등의 Mustache 문법을 모방한 템플릿 처리
         System.out.println("\n[테스트 3] GET /view/mustache - MockMustacheEngine");
         HttpRequest mustacheRequest = new HttpRequest("/view/mustache", "GET"); // GET 요청 생성
-        HttpResponse mustacheResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse mustacheResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(mustacheRequest, mustacheResponse); // 디스패처로 요청 처리
 
         // 테스트 4: MockJspEngine - JSP 문법 시뮬레이션
         // <%= %>, <% %> 등의 JSP 스크립틀릿을 모방한 템플릿 처리
         System.out.println("\n[테스트 4] GET /view/jsp - MockJspEngine");
         HttpRequest jspRequest = new HttpRequest("/view/jsp", "GET"); // GET 요청 생성
-        HttpResponse jspResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse jspResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(jspRequest, jspResponse); // 디스패처로 요청 처리
 
         // 테스트 5: 존재하지 않는 템플릿 - 404 에러 처리 테스트
         // 요청한 뷰명에 해당하는 템플릿 파일이 없을 때의 에러 처리 확인
         System.out.println("\n[테스트 5] GET /view/nonexistent - 404 에러 처리");
         HttpRequest nonexistentRequest = new HttpRequest("/view/nonexistent", "GET"); // 존재하지 않는 뷰 요청
-        HttpResponse nonexistentResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse nonexistentResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(nonexistentRequest, nonexistentResponse); // 에러 처리 확인
 
         // 테스트 6: 뷰 엔진 우선순위 테스트
         // 동일한 뷰명으로 여러 확장자의 템플릿이 있을 때 우선순위에 따른 선택 확인
         System.out.println("\n[테스트 6] GET /view/priority - 뷰 엔진 우선순위");
         HttpRequest priorityRequest = new HttpRequest("/view/priority", "GET"); // 우선순위 테스트 요청
-        HttpResponse priorityResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse priorityResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(priorityRequest, priorityResponse); // 우선순위 로직 확인
 
         // 테스트 7: 뷰 엔진 성능 비교 테스트
         // 대량의 데이터를 처리할 때 각 뷰 엔진의 성능 차이 확인
         System.out.println("\n[테스트 7] GET /view/performance - 뷰 엔진 성능 테스트");
         HttpRequest performanceRequest = new HttpRequest("/view/performance", "GET"); // 성능 테스트 요청
-        HttpResponse performanceResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse performanceResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(performanceRequest, performanceResponse); // 성능 측정
 
         // 테스트 8: 뷰 엔진 정보 조회 테스트
         // 현재 등록된 뷰 엔진들의 정보를 표시하는 페이지 확인
         System.out.println("\n[테스트 8] GET /view/info - 뷰 엔진 정보 조회");
         HttpRequest infoRequest = new HttpRequest("/view/info", "GET"); // 정보 조회 요청
-        HttpResponse infoResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse infoResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(infoRequest, infoResponse); // 뷰 엔진 정보 확인
 
         // 테스트 9: JSON 응답과 뷰 엔진 조합 테스트
@@ -485,7 +487,7 @@ public class WinterMain {
         System.out.println("\n[테스트 9] GET /view/simple - JSON vs HTML 선택");
         HttpRequest jsonViewRequest = new HttpRequest("/view/simple", "GET"); // 같은 엔드포인트
         jsonViewRequest.addHeader("Accept", "application/json"); // JSON 응답 요청 헤더 추가
-        HttpResponse jsonViewResponse = new HttpResponse(); // 응답 객체 생성
+        HttpResponse jsonViewResponse = new StandardHttpResponse(); // 응답 객체 생성
         dispatcher.dispatch(jsonViewRequest, jsonViewResponse); // Content Negotiation 확인
 
         // 테스트 10: 템플릿 렌더링 오류 처리 테스트
@@ -494,7 +496,7 @@ public class WinterMain {
         try {
             // 잘못된 모델 데이터로 렌더링 오류 유발 시도
             HttpRequest errorRequest = new HttpRequest("/view/simple?invalidParam=true", "GET"); // 오류 유발 파라미터
-            HttpResponse errorResponse = new HttpResponse(); // 응답 객체 생성
+            HttpResponse errorResponse = new StandardHttpResponse(); // 응답 객체 생성
             dispatcher.dispatch(errorRequest, errorResponse); // 에러 처리 로직 확인
         } catch (Exception e) {
             System.out.println("예상된 렌더링 오류 처리 완료: " + e.getMessage()); // 예외 처리 확인
@@ -536,12 +538,12 @@ public class WinterMain {
         // /hello 요청
         HttpRequest helloRequest = new HttpRequest("/hello");
         helloRequest.addParameter("name", "winter");
-        HttpResponse helloResponse = new HttpResponse();
+        HttpResponse helloResponse = new StandardHttpResponse();
         dispatcher.dispatch(helloRequest, helloResponse);
 
         // /api 요청 (21단계 JSON)
         HttpRequest apiRequest = new HttpRequest("/api", "GET");
-        HttpResponse apiResponse = new HttpResponse();
+        HttpResponse apiResponse = new StandardHttpResponse();
         dispatcher.dispatch(apiRequest, apiResponse);
     }
 
@@ -554,7 +556,7 @@ public class WinterMain {
         // JSON 응답 테스트
         HttpRequest jsonRequest = new HttpRequest("/api", "GET");
         jsonRequest.addHeader("Accept", "application/json");
-        HttpResponse jsonResponse = new HttpResponse();
+        HttpResponse jsonResponse = new StandardHttpResponse();
         dispatcher.dispatch(jsonRequest, jsonResponse);
     }
 
@@ -567,50 +569,50 @@ public class WinterMain {
         // 테스트 1: GET /products (파라미터 없는 메서드)
         System.out.println("\n[테스트 1] GET /products - 파라미터 없는 어노테이션 메서드");
         HttpRequest productsRequest = new HttpRequest("/products", "GET");
-        HttpResponse productsResponse = new HttpResponse();
+        HttpResponse productsResponse = new StandardHttpResponse();
         dispatcher.dispatch(productsRequest, productsResponse);
 
         // 테스트 2: GET /product/detail (HttpRequest 파라미터)
         System.out.println("\n[테스트 2] GET /product/detail - HttpRequest 파라미터 메서드");
         HttpRequest detailRequest = new HttpRequest("/product/detail?id=12345&name=Winter Laptop", "GET");
-        HttpResponse detailResponse = new HttpResponse();
+        HttpResponse detailResponse = new StandardHttpResponse();
         dispatcher.dispatch(detailRequest, detailResponse);
 
         // 테스트 3: POST /products (HttpRequest + HttpResponse 파라미터)
         System.out.println("\n[테스트 3] POST /products - 상품 생성");
         HttpRequest createRequest = new HttpRequest("/products?name=Winter Phone&price=599000", "POST");
-        HttpResponse createResponse = new HttpResponse();
+        HttpResponse createResponse = new StandardHttpResponse();
         dispatcher.dispatch(createRequest, createResponse);
 
         // 테스트 4: POST /products (잘못된 데이터)
         System.out.println("\n[테스트 4] POST /products - 유효성 검증 실패");
         HttpRequest invalidRequest = new HttpRequest("/products", "POST"); // name 파라미터 없음
-        HttpResponse invalidResponse = new HttpResponse();
+        HttpResponse invalidResponse = new StandardHttpResponse();
         dispatcher.dispatch(invalidRequest, invalidResponse);
 
         // 테스트 5: 모든 HTTP 메서드 허용 테스트
         System.out.println("\n[테스트 5] PUT /product/info - 모든 메서드 허용");
         HttpRequest infoRequest = new HttpRequest("/product/info", "PUT");
-        HttpResponse infoResponse = new HttpResponse();
+        HttpResponse infoResponse = new StandardHttpResponse();
         dispatcher.dispatch(infoRequest, infoResponse);
 
         // 테스트 6: 어노테이션 컨트롤러 JSON 응답
         System.out.println("\n[테스트 6] GET /products - JSON 응답");
         HttpRequest productsJsonRequest = new HttpRequest("/products", "GET");
         productsJsonRequest.addHeader("Accept", "application/json");
-        HttpResponse productsJsonResponse = new HttpResponse();
+        HttpResponse productsJsonResponse = new StandardHttpResponse();
         dispatcher.dispatch(productsJsonRequest, productsJsonResponse);
 
         // 테스트 7: 어노테이션과 레거시 핸들러 우선순위 테스트
         System.out.println("\n[테스트 7] 핸들러 우선순위 테스트 - 기존 /user (레거시)");
         HttpRequest legacyRequest = new HttpRequest("/user?name=Legacy&city=Seoul&zipcode=12345", "GET");
-        HttpResponse legacyResponse = new HttpResponse();
+        HttpResponse legacyResponse = new StandardHttpResponse();
         dispatcher.dispatch(legacyRequest, legacyResponse);
 
         // 테스트 8: 존재하지 않는 어노테이션 경로
         System.out.println("\n[테스트 8] GET /nonexistent - 404 테스트");
         HttpRequest notFoundRequest = new HttpRequest("/nonexistent", "GET");
-        HttpResponse notFoundResponse = new HttpResponse();
+        HttpResponse notFoundResponse = new StandardHttpResponse();
         dispatcher.dispatch(notFoundRequest, notFoundResponse);
     }
 
@@ -623,68 +625,68 @@ public class WinterMain {
         // 테스트 1: @RequestParam 기본 사용 - 필수 파라미터
         System.out.println("\n[테스트 1] GET /search - @RequestParam 기본 바인딩");
         HttpRequest searchRequest = new HttpRequest("/search?keyword=spring&page=2", "GET");
-        HttpResponse searchResponse = new HttpResponse();
+        HttpResponse searchResponse = new StandardHttpResponse();
         dispatcher.dispatch(searchRequest, searchResponse);
 
         // 테스트 2: @RequestParam 기본값 사용
         System.out.println("\n[테스트 2] GET /search - 기본값 사용 (page 생략)");
         HttpRequest searchDefaultRequest = new HttpRequest("/search?keyword=java", "GET");
-        HttpResponse searchDefaultResponse = new HttpResponse();
+        HttpResponse searchDefaultResponse = new StandardHttpResponse();
         dispatcher.dispatch(searchDefaultRequest, searchDefaultResponse);
 
         // 테스트 3: @RequestParam 고급 검색 - 여러 파라미터 조합
         System.out.println("\n[테스트 3] GET /search/advanced - 복합 파라미터 바인딩");
         HttpRequest advancedRequest = new HttpRequest("/search/advanced?keyword=spring&category=tech&minPrice=1000&maxPrice=5000&sortBy=date", "GET");
-        HttpResponse advancedResponse = new HttpResponse();
+        HttpResponse advancedResponse = new StandardHttpResponse();
         dispatcher.dispatch(advancedRequest, advancedResponse);
 
         // 테스트 4: @RequestParam 선택적 파라미터 (일부 생략)
         System.out.println("\n[테스트 4] GET /search/advanced - 선택적 파라미터 생략");
         HttpRequest partialRequest = new HttpRequest("/search/advanced?keyword=java&category=programming", "GET");
-        HttpResponse partialResponse = new HttpResponse();
+        HttpResponse partialResponse = new StandardHttpResponse();
         dispatcher.dispatch(partialRequest, partialResponse);
 
         // 테스트 5: @ModelAttribute 객체 바인딩
         System.out.println("\n[테스트 5] POST /search/form - @ModelAttribute 객체 바인딩");
         HttpRequest formRequest = new HttpRequest("/search/form?keyword=spring boot&category=framework&page=3&size=15&sortBy=relevance&sortOrder=desc", "POST");
-        HttpResponse formResponse = new HttpResponse();
+        HttpResponse formResponse = new StandardHttpResponse();
         dispatcher.dispatch(formRequest, formResponse);
 
         // 테스트 6: @ModelAttribute 유효성 검증 실패
         System.out.println("\n[테스트 6] POST /search/form - 유효성 검증 실패 (keyword 없음)");
         HttpRequest invalidFormRequest = new HttpRequest("/search/form?category=tech&page=1", "POST");
-        HttpResponse invalidFormResponse = new HttpResponse();
+        HttpResponse invalidFormResponse = new StandardHttpResponse();
         dispatcher.dispatch(invalidFormRequest, invalidFormResponse);
 
         // 테스트 7: 혼합 파라미터 (@RequestParam + @ModelAttribute)
         System.out.println("\n[테스트 7] POST /search/mixed - 혼합 파라미터 바인딩");
         HttpRequest mixedRequest = new HttpRequest("/search/mixed?userId=12345&debug=true&keyword=hibernate&category=database&page=2", "POST");
-        HttpResponse mixedResponse = new HttpResponse();
+        HttpResponse mixedResponse = new StandardHttpResponse();
         dispatcher.dispatch(mixedRequest, mixedResponse);
 
         // 테스트 8: 배열 파라미터 (@RequestParam String[])
         System.out.println("\n[테스트 8] GET /search/tags - 배열 파라미터 바인딩");
         HttpRequest tagsRequest = new HttpRequest("/search/tags?tags=java,spring,mvc,hibernate&includeAll=true", "GET");
-        HttpResponse tagsResponse = new HttpResponse();
+        HttpResponse tagsResponse = new StandardHttpResponse();
         dispatcher.dispatch(tagsRequest, tagsResponse);
 
         // 테스트 9: 타입 변환 테스트 (double, boolean)
         System.out.println("\n[테스트 9] GET /search/filter - 다양한 타입 변환");
         HttpRequest filterRequest = new HttpRequest("/search/filter?minRating=4.5&publishedAfter=2023-01-01&isAvailable=true", "GET");
-        HttpResponse filterResponse = new HttpResponse();
+        HttpResponse filterResponse = new StandardHttpResponse();
         dispatcher.dispatch(filterRequest, filterResponse);
 
         // 테스트 10: 필수 파라미터 누락 에러 테스트
         System.out.println("\n[테스트 10] GET /search - 필수 파라미터 누락 (keyword 없음)");
         HttpRequest missingParamRequest = new HttpRequest("/search?page=1", "GET");
-        HttpResponse missingParamResponse = new HttpResponse();
+        HttpResponse missingParamResponse = new StandardHttpResponse();
         dispatcher.dispatch(missingParamRequest, missingParamResponse);
 
         // 테스트 11: JSON 응답과 파라미터 바인딩 조합
         System.out.println("\n[테스트 11] GET /search - JSON 응답 + 파라미터 바인딩");
         HttpRequest jsonSearchRequest = new HttpRequest("/search?keyword=winter&page=5", "GET");
         jsonSearchRequest.addHeader("Accept", "application/json");
-        HttpResponse jsonSearchResponse = new HttpResponse();
+        HttpResponse jsonSearchResponse = new StandardHttpResponse();
         dispatcher.dispatch(jsonSearchRequest, jsonSearchResponse);
     }
 
@@ -697,7 +699,7 @@ public class WinterMain {
         // 테스트 1: 파일 업로드 폼 페이지 요청
         System.out.println("\n[테스트 1] GET /upload/form - 파일 업로드 폼 페이지");
         HttpRequest formRequest = new HttpRequest("/upload/form", "GET");
-        HttpResponse formResponse = new HttpResponse();
+        HttpResponse formResponse = new StandardHttpResponse();
         dispatcher.dispatch(formRequest, formResponse);
 
         // 테스트 2: 단일 파일 업로드 - 실제 multipart 바이너리 시뮬레이션
@@ -734,7 +736,7 @@ public class WinterMain {
             System.out.println("- 파일 크기: " + multipartBody.length() + " bytes");
             System.out.println("- MIME 타입: application/pdf");
 
-            HttpResponse uploadResponse = new HttpResponse();
+            HttpResponse uploadResponse = new StandardHttpResponse();
             dispatcher.dispatch(uploadRequest, uploadResponse);
 
         } catch (Exception e) {
@@ -754,7 +756,7 @@ public class WinterMain {
             // 테스트 1: 세션 홈 페이지 - 새 세션 생성
             System.out.println("\n[테스트 1] GET /session - 새 세션 생성");
             HttpRequest sessionHomeRequest = new HttpRequest("/session", "GET");
-            HttpResponse sessionHomeResponse = new HttpResponse();
+            HttpResponse sessionHomeResponse = new StandardHttpResponse();
             dispatcher.dispatch(sessionHomeRequest, sessionHomeResponse);
 
             // 첫 번째 요청에서 생성된 세션 ID 추출 (시뮬레이션)
@@ -766,7 +768,7 @@ public class WinterMain {
             if (sessionId != null) {
                 sessionExistingRequest.addHeader("Cookie", "JSESSIONID=" + sessionId);
             }
-            HttpResponse sessionExistingResponse = new HttpResponse();
+            HttpResponse sessionExistingResponse = new StandardHttpResponse();
             dispatcher.dispatch(sessionExistingRequest, sessionExistingResponse);
 
             // 테스트 3: 세션에 속성 설정
@@ -775,7 +777,7 @@ public class WinterMain {
             if (sessionId != null) {
                 setAttributeRequest.addHeader("Cookie", "JSESSIONID=" + sessionId);
             }
-            HttpResponse setAttributeResponse = new HttpResponse();
+            HttpResponse setAttributeResponse = new StandardHttpResponse();
             try {
                 dispatcher.dispatch(setAttributeRequest, setAttributeResponse);
             } catch (Exception e) {
@@ -789,7 +791,7 @@ public class WinterMain {
             if (sessionId != null) {
                 getAttributeRequest.addHeader("Cookie", "JSESSIONID=" + sessionId);
             }
-            HttpResponse getAttributeResponse = new HttpResponse();
+            HttpResponse getAttributeResponse = new StandardHttpResponse();
             try {
                 dispatcher.dispatch(getAttributeRequest, getAttributeResponse);
             } catch (Exception e) {
@@ -803,7 +805,7 @@ public class WinterMain {
             if (sessionId != null) {
                 loginRequest.addHeader("Cookie", "JSESSIONID=" + sessionId);
             }
-            HttpResponse loginResponse = new HttpResponse();
+            HttpResponse loginResponse = new StandardHttpResponse();
             try {
                 dispatcher.dispatch(loginRequest, loginResponse);
             } catch (Exception e) {
@@ -817,7 +819,7 @@ public class WinterMain {
             if (sessionId != null) {
                 addToCartRequest.addHeader("Cookie", "JSESSIONID=" + sessionId);
             }
-            HttpResponse addToCartResponse = new HttpResponse();
+            HttpResponse addToCartResponse = new StandardHttpResponse();
             try {
                 dispatcher.dispatch(addToCartRequest, addToCartResponse);
             } catch (Exception e) {
@@ -879,7 +881,7 @@ public class WinterMain {
             System.out.println("오류 테스트 [" + testName + "] - " +
                     (filename != null ? filename : "파일 없음"));
 
-            HttpResponse errorResponse = new HttpResponse();
+            HttpResponse errorResponse = new StandardHttpResponse();
             dispatcher.dispatch(errorRequest, errorResponse);
 
         } catch (Exception e) {
