@@ -11,7 +11,7 @@ import winter.session.SessionConfig;
 import winter.session.SessionManager;
 import winter.upload.MultipartParser;
 import winter.upload.MultipartRequest;
-import winter.view.IntegratedViewResolver;
+import winter.view.ContentNegotiatingViewResolver; // 30챕터: IntegratedViewResolver 대신 사용
 import winter.view.ModelAndView;
 import winter.view.View;
 
@@ -26,7 +26,13 @@ import java.util.List;
  * HandlerAdapter를 통해 실행한 후,
  * ViewResolver로 뷰를 찾아 렌더링하는 프레임워크의 핵심 흐름을 담당한다.
  *
- * ===== 29단계 업데이트: ResponseEntity 지원 추가 =====
+ * ===== 30챕터 업데이트: REST API 완전 지원 =====
+ * - RestHandlerAdapter 추가로 @RestController와 @ResponseBody 완전 지원
+ * - ContentNegotiatingViewResolver로 ResponseEntity 자동 처리
+ * - JSON 응답과 HTML 템플릿을 동시에 지원하는 하이브리드 아키텍처
+ * - 기존 29단계의 모든 기능 완전 유지
+ *
+ * ===== 29단계 기능들 완전 유지 =====
  * - HttpResponse를 인터페이스로 사용하여 유연성 증대
  * - AnnotationHandlerAdapter에서 ResponseEntity 처리 지원
  * - 기존 27단계의 모든 기능 완전 유지
@@ -38,7 +44,7 @@ import java.util.List;
  * - 다양한 횡단 관심사 처리 (로깅, 인증, 성능 측정, CORS 등)
  *
  * ===== 26단계 기능들 완전 유지 =====
- * - IntegratedViewResolver를 사용하여 다양한 뷰 엔진 통합 지원
+ * - 다양한 뷰 엔진 통합 지원 (30챕터: ContentNegotiatingViewResolver로 통합)
  * - SimpleTemplate, Thymeleaf, Mustache, JSP 등 다양한 뷰 엔진 자동 선택
  * - 템플릿 확장자에 따른 적절한 뷰 엔진 매핑
  *
@@ -54,21 +60,21 @@ import java.util.List;
  *
  * ===== 22단계 기능들 완전 유지 =====
  * - CombinedHandlerMapping으로 레거시와 어노테이션 방식 통합
- * - AnnotationHandlerAdapter 추가로 HandlerMethod 실행 지원 (29단계로 확장)
- * - 기존 기능들과 완전 호환
+ * - 기존 기능들과 완전 호환 (30챕터: @RestController 추가 지원)
  */
 public class Dispatcher {
 
-    // ===== 27단계 기존 필드들 완전 유지 =====
+    // ===== 30챕터 기존 필드들 완전 유지 및 확장 =====
 
-    // 통합 핸들러 매핑 (레거시 + 어노테이션)
+    // 통합 핸들러 매핑 (레거시 + MVC + REST)
     private final CombinedHandlerMapping handlerMapping = new CombinedHandlerMapping();
 
-    // 다양한 HandlerAdapter 지원 (레거시 + 어노테이션)
-    // 29단계 수정: AnnotationHandlerAdapter가 ResponseEntity를 지원하도록 업그레이드됨
+    // 30챕터 업데이트: RestHandlerAdapter 추가로 완전한 REST 지원
+    // 핸들러 어댑터 우선순위: REST → MVC → Legacy
     private final List<HandlerAdapter> handlerAdapters = List.of(
-            new AnnotationHandlerAdapter(),    // 29단계: ResponseEntity 지원 추가
-            new ControllerHandlerAdapter()     // 레거시 Controller 인터페이스 어댑터 (변경 없음)
+            new RestHandlerAdapter(),         // 30챕터 신규: @RestController와 @ResponseBody 처리 (최우선)
+            new AnnotationHandlerAdapter(),   // 29단계: 기존 @Controller 처리 (ModelAndView)
+            new ControllerHandlerAdapter()    // 레거시 Controller 인터페이스 어댑터 (변경 없음)
     );
 
     // 다양한 ExceptionResolver 지원 가능 (27단계와 완전 동일)
@@ -86,9 +92,10 @@ public class Dispatcher {
     private final String staticBasePath = "src/winter/static";
 
     /**
-     * Dispatcher 생성자 (27단계와 완전 동일)
+     * 30챕터 업데이트: Dispatcher 생성자
      * 핸들러 등록은 CombinedHandlerMapping에 완전 위임
      * 기본 인터셉터들 등록 및 세션 관리자 초기화
+     * REST API 지원 활성화
      */
     public Dispatcher() {
         // 세션 설정 초기화 (25단계와 완전 동일)
@@ -109,7 +116,20 @@ public class Dispatcher {
 
         System.out.println("SessionManager 초기화 완료: " + sessionManager);
         System.out.println("InterceptorChain 초기화 완료: " + interceptorChain);
-        System.out.println("29단계: ResponseEntity 지원 활성화");
+
+        // 30챕터: REST API 지원 상태 출력
+        System.out.println("\n=== 30챕터: Winter 프레임워크 완전 초기화 ===");
+        System.out.println("✅ REST API 지원 활성화");
+        System.out.println("✅ @RestController 완전 지원");
+        System.out.println("✅ ResponseEntity 완전 지원");
+        System.out.println("✅ JSON 자동 직렬화 지원");
+        System.out.println("✅ Content Negotiation 지원");
+        System.out.println("✅ 기존 MVC 패턴 완전 유지");
+        System.out.println("등록된 핸들러 어댑터: " + handlerAdapters.size() + "개");
+        System.out.println("  1. RestHandlerAdapter (REST API 전용)");
+        System.out.println("  2. AnnotationHandlerAdapter (MVC 전용)");
+        System.out.println("  3. ControllerHandlerAdapter (레거시 전용)");
+        System.out.println("============================================\n");
     }
 
     // ===== 27단계 기존 메서드들 완전 유지 =====
@@ -147,10 +167,11 @@ public class Dispatcher {
     }
 
     /**
-     * 외부에서 어노테이션 컨트롤러를 추가로 등록할 수 있는 메서드 (완전 동일)
+     * 30챕터 업데이트: 외부에서 어노테이션 컨트롤러를 추가로 등록할 수 있는 메서드
+     * @Controller와 @RestController 모두 지원
      * 테스트나 동적 등록이 필요한 경우에만 사용
      *
-     * @param controllerClass @Controller 어노테이션이 붙은 클래스
+     * @param controllerClass @Controller 또는 @RestController 어노테이션이 붙은 클래스
      */
     public void registerController(Class<?> controllerClass) {
         handlerMapping.registerAnnotationController(controllerClass);
@@ -186,36 +207,45 @@ public class Dispatcher {
         return new StandardHttpResponse();
     }
 
-    // ===== 요청 처리 메서드 (29단계 최소 수정) =====
+    // ===== 30챕터: 요청 처리 메서드 업데이트 =====
 
     /**
-     * 요청을 처리하는 핵심 메서드 (29단계: 최소 수정으로 ResponseEntity 지원)
+     * 30챕터 업데이트: 요청을 처리하는 핵심 메서드
+     * REST API와 전통적인 MVC를 모두 지원하는 하이브리드 아키텍처
      *
-     * ===== 27단계 처리 흐름 완전 유지 =====
+     * ===== 30챕터 처리 흐름 =====
      * 0. 세션 처리 (쿠키에서 세션 ID 추출, 세션 생성/조회) (25단계)
      * 1. Multipart 요청 감지 및 파싱 (24단계)
      * 2. HandlerMapping으로 핸들러 조회 (어노테이션 우선, 레거시 대체)
      * 3. 인터셉터 체인의 preHandle 실행 (27단계)
-     * 4. HandlerAdapter를 통해 핸들러 실행(ModelAndView반환) - 29단계: ResponseEntity도 처리
+     * 4. HandlerAdapter를 통해 핸들러 실행 - 30챕터: REST/MVC 자동 판별
+     *    - RestHandlerAdapter: @RestController, @ResponseBody 처리 → JSON 응답
+     *    - AnnotationHandlerAdapter: @Controller 처리 → HTML 템플릿
+     *    - ControllerHandlerAdapter: 레거시 Controller 처리
      * 5. 인터셉터 체인의 postHandle 실행 (27단계)
-     * 6. IntegratedViewResolver로 View를 찾고, 모델을 렌더링 (26단계)
+     * 6. ContentNegotiatingViewResolver로 View를 찾고 렌더링 - 30챕터: REST/MVC 통합
+     *    - ResponseEntity → ResponseEntityView (JSON + 상태 코드 + 헤더)
+     *    - JsonView → JSON 직렬화
+     *    - HTML Templates → 기존 템플릿 엔진들
      * 7. 인터셉터 체인의 afterCompletion 실행 (27단계)
      * 8. 세션 쿠키 설정 (25단계)
      *
-     * ===== 29단계 변경사항 =====
-     * - HttpResponse를 인터페이스로 처리
-     * - AnnotationHandlerAdapter에서 ResponseEntity 자동 처리
-     * - JSON 응답 자동 변환 지원
+     * ===== 30챕터 핵심 변경사항 =====
+     * - RestHandlerAdapter를 최우선으로 배치하여 REST API 최적화
+     * - ContentNegotiatingViewResolver로 통합된 뷰 해결
+     * - ResponseEntity 완전 지원으로 HTTP 제어 강화
+     * - JSON과 HTML을 동시에 지원하는 하이브리드 구조
      */
     public void dispatch(HttpRequest request, HttpResponse response) {
         Object handler = null;
         Exception dispatchException = null;
 
         try {
-            System.out.println("\n=== 29단계: ResponseEntity 지원 요청 처리 시작 ===");
+            System.out.println("\n=== 30챕터: REST + MVC 하이브리드 요청 처리 시작 ===");
             System.out.println("Method: " + request.getMethod());
             System.out.println("Path: " + request.getPath());
             System.out.println("Content-Type: " + request.getHeader("Content-Type"));
+            System.out.println("Accept: " + request.getHeader("Accept"));
 
             // 0. 25단계: 세션 처리 (완전 동일)
             handleSession(request, response);
@@ -244,7 +274,7 @@ public class Dispatcher {
                 return;
             }
 
-            // 3. 핸들러 매핑 (어노테이션 우선, 레거시 대체) (완전 동일)
+            // 3. 핸들러 매핑 (어노테이션 우선, 레거시 대체) (30챕터: REST/MVC 모두 포함)
             handler = handlerMapping.getHandler(requestPath, requestMethod);
 
             if (handler == null) {
@@ -264,18 +294,22 @@ public class Dispatcher {
                 return;
             }
 
-            // 5. 적절한 HandlerAdapter 찾기 및 실행
-            // 29단계 주목: AnnotationHandlerAdapter가 ResponseEntity를 자동 처리
+            // 5. 30챕터: 적절한 HandlerAdapter 찾기 및 실행 (REST 우선 처리)
             ModelAndView mv = null;
             for (HandlerAdapter adapter : handlerAdapters) {
                 if (adapter.supports(handler)) {
                     System.out.println("사용할 어댑터: " + adapter.getClass().getSimpleName());
 
-                    if (adapter instanceof AnnotationHandlerAdapter) {
-                        System.out.println("29단계: ResponseEntity 지원 어댑터 사용");
+                    // 30챕터: 어댑터별 처리 방식 로깅
+                    if (adapter instanceof RestHandlerAdapter) {
+                        System.out.println("30챕터: REST API 처리 - JSON 응답 또는 ResponseEntity");
+                    } else if (adapter instanceof AnnotationHandlerAdapter) {
+                        System.out.println("MVC 패턴 처리 - ModelAndView 반환");
+                    } else {
+                        System.out.println("레거시 Controller 처리");
                     }
 
-                    // 핸들러 실행 (29단계: ResponseEntity도 처리됨)
+                    // 핸들러 실행 (30챕터: REST/MVC 자동 판별 처리)
                     mv = adapter.handle(handler, request, response);
                     break;
                 }
@@ -284,25 +318,27 @@ public class Dispatcher {
             // 6. 27단계: 인터셉터 체인의 postHandle 실행 (완전 동일)
             interceptorChain.applyPostHandle(request, response, handler, mv);
 
-            // 7. 뷰 처리 (ModelAndView가 있는 경우) (26단계와 완전 동일)
+            // 7. 30챕터: 뷰 처리 (ContentNegotiatingViewResolver 사용)
             if (mv != null) {
                 System.out.println("ModelAndView 생성: " + mv.getViewName());
 
-                // 26챕터: IntegratedViewResolver 사용 (완전 동일)
-                IntegratedViewResolver viewResolver = new IntegratedViewResolver();
+                // 30챕터: ContentNegotiatingViewResolver 사용 (ResponseEntity + JSON + HTML 통합)
+                ContentNegotiatingViewResolver viewResolver = new ContentNegotiatingViewResolver();
                 viewResolver.setCurrentRequest(request);
                 View view = viewResolver.resolveViewName(mv.getViewName());
 
                 System.out.println("뷰 해결: " + view.getClass().getSimpleName());
 
-                // 26챕터: 뷰 렌더링 시 HttpRequest도 함께 전달 (완전 동일)
+                // 30챕터: 뷰 렌더링 (REST와 MVC 모두 지원)
                 view.render(mv.getModel(), request, response);
+
+                System.out.println("뷰 렌더링 완료 - " + view.getClass().getSimpleName());
             } else {
-                System.out.println("ModelAndView가 null - 직접 응답 처리됨 (ResponseEntity 응답 포함)");
+                System.out.println("ModelAndView가 null - 직접 응답 처리됨 (REST API 직접 응답 등)");
             }
 
             response.send();
-            System.out.println("=== 29단계: ResponseEntity 지원 요청 처리 완료 ===");
+            System.out.println("=== 30챕터: REST + MVC 하이브리드 요청 처리 완료 ===\n");
 
         } catch (Exception e) {
             dispatchException = e;
@@ -450,7 +486,72 @@ public class Dispatcher {
     }
 
     /**
-     * Dispatcher 종료 시 세션 관리자 정리 (27단계와 완전 동일)
+     * 30챕터 추가: 등록된 REST API 엔드포인트 목록 조회
+     * 운영 모니터링이나 API 문서 생성 목적
+     *
+     * @return REST API 엔드포인트 목록
+     */
+    public java.util.List<String> getRestApiEndpoints() {
+        return handlerMapping.getRestApiEndpoints();
+    }
+
+    /**
+     * 30챕터 추가: 등록된 MVC 페이지 목록 조회
+     * 사이트맵 생성이나 운영 모니터링 목적
+     *
+     * @return MVC 페이지 엔드포인트 목록
+     */
+    public java.util.List<String> getMvcPageEndpoints() {
+        return handlerMapping.getMvcPageEndpoints();
+    }
+
+    /**
+     * 30챕터 추가: 프레임워크 상태 정보 반환
+     * 운영 모니터링이나 헬스 체크 목적
+     *
+     * @return 프레임워크 상태 정보
+     */
+    public java.util.Map<String, Object> getFrameworkStatus() {
+        java.util.Map<String, Object> status = new java.util.HashMap<>();
+
+        // 기본 정보
+        status.put("version", "30챕터 - REST API 완전 지원");
+        status.put("handlerAdapters", handlerAdapters.size());
+        status.put("interceptors", interceptorChain.size());
+        status.put("exceptionResolvers", exceptionResolvers.size());
+
+        // 핸들러 통계
+        java.util.Map<String, Integer> handlerStats = handlerMapping.getAnnotationHandlerMapping().getControllerStats();
+        status.put("mvcHandlers", handlerStats.get("mvc"));
+        status.put("restHandlers", handlerStats.get("rest"));
+        status.put("totalHandlers", handlerStats.get("total"));
+
+        // 세션 정보
+        status.put("sessionManagerActive", sessionManager != null);
+        if (sessionManager != null) {
+            status.put("sessionConfig", sessionManager.getConfig().toString());
+        }
+
+        // 지원 기능
+        status.put("features", java.util.List.of(
+                "REST API (@RestController)",
+                "MVC Pattern (@Controller)",
+                "ResponseEntity Support",
+                "JSON Serialization",
+                "Content Negotiation",
+                "File Upload (Multipart)",
+                "Session Management",
+                "Interceptor Chain",
+                "Exception Handling",
+                "Static Resource Serving",
+                "Multiple View Engines"
+        ));
+
+        return status;
+    }
+
+    /**
+     * 30챕터 업데이트: Dispatcher 종료 시 정리 작업
      */
     public void shutdown() {
         if (sessionManager != null) {
@@ -464,6 +565,9 @@ public class Dispatcher {
             System.out.println("InterceptorChain 정리 완료");
         }
 
-        System.out.println("29단계: Dispatcher 종료 - ResponseEntity 지원 비활성화");
+        System.out.println("30챕터: Winter 프레임워크 종료");
+        System.out.println("  ✓ REST API 지원 비활성화");
+        System.out.println("  ✓ MVC 패턴 지원 비활성화");
+        System.out.println("  ✓ 모든 리소스 정리 완료");
     }
 }

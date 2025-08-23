@@ -95,6 +95,15 @@ public enum HttpStatus {
     }
 
     /**
+     * HTTP 상태 코드 값을 반환 (value()와 동일, Spring 호환성을 위해 추가)
+     *
+     * @return HTTP 상태 코드 (예: 200, 404, 500)
+     */
+    public int getCode() {
+        return this.code;
+    }
+
+    /**
      * HTTP 상태 코드의 설명 문구를 반환
      *
      * @return 상태 코드 설명 (예: "OK", "Not Found", "Internal Server Error")
