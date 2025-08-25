@@ -2,7 +2,7 @@
 
 `Winter`는 Spring MVC의 구조를 직접 구현하며 이해하는 학습용 경량 웹 프레임워크입니다.
 DispatcherServlet, HandlerMapping, ViewResolver 등의 구성 요소를 단계별로 구현해내며, 각 컴포넌트의 역할과 협업 방식을 체득하는 것을 목표로 합니다.
-
+//현재 진행상황 30진행중
 ---
 
 ## 함수 구현 단계별 문서
